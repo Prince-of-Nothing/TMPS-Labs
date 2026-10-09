@@ -19,6 +19,12 @@ created automatically, and matching ignores letter case.
 
 ## Lab 0 — SOLID principles
 
+The console project demonstrates SRP by separating media rules, library
+storage, use cases, scoring, and input/output. OCP is demonstrated with the
+replaceable `IMediaScoreCalculator` policy. DIP is demonstrated by
+`WatchlistService` depending on the `IMediaLibrary` and
+`IMediaScoreCalculator` abstractions.
+
 Lab 0 is a console-based consumed-media watchlist. It lets you create media
 categories and tags, add and edit titles, mark items as consumed, and rate
 consumed items from 1 to 10. Each media item, category, and tag has an ID.
@@ -103,10 +109,8 @@ Type `help` in the app to see the commands. `add` and `edit` accept category
 and tag IDs or names; entering a new name creates it. The data is held in
 memory and is cleared when the app exits.
 
-The previous web/PostgreSQL implementation is preserved only in the local
-`archive/` folder. Git ignores that folder so the larger experiment is not
-included in the Lab 0 submission. See [Lab0/README.md](./Lab0/README.md) and
-[Lab0/DOCUMENTATION.md](./Lab0/DOCUMENTATION.md) for the project details.
+See [Lab0/README.md](./Lab0/README.md) and
+[Lab0/DOCUMENTATION.md](./Lab0/DOCUMENTATION.md).
 
 ## What comes next
 

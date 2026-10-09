@@ -20,6 +20,12 @@ Lab 0 focuses on three SOLID principles without a database or UI framework.
 
 ## Lab 0 — SOLID principles
 
+The console project demonstrates SRP by separating media rules, library
+storage, use cases, scoring, and input/output. OCP is demonstrated with the
+replaceable `IMediaScoreCalculator` policy. DIP is demonstrated by
+`WatchlistService` depending on the `IMediaLibrary` and
+`IMediaScoreCalculator` abstractions.
+
 ### 1. Single Responsibility Principle (SRP)
 
 > A class should have only one reason to change.
@@ -90,11 +96,12 @@ dotnet run --project .\Lab0.csproj
 ```
 
 Enter `help` for commands. `add` and `edit` accept category/tag names or IDs
-(for example, `1` or `#1`). New names are created automatically; matching
-ignores case. During edit, leave a field blank to keep its current value, or
-enter `-` to clear all tags. The app stores data in memory, so it resets after
-exit. See [DOCUMENTATION.md](./DOCUMENTATION.md) for the detailed class
-mapping and workflow.
+(for example, `1` or `#1`). Use `edit` to modify an item's title, category,
+or tags; leave a field blank to keep its current value, or enter `-` to clear
+its tags. New names are created automatically; matching ignores case. The app
+stores data in memory, so it resets after exit. See
+[DOCUMENTATION.md](./DOCUMENTATION.md) for the detailed class mapping and
+workflow.
 
 The earlier PostgreSQL/web experiment is retained locally at
 `archive/lab0-web-postgres/` and is ignored by Git.

@@ -1,9 +1,8 @@
-﻿namespace Lab0;
+using Lab0;
 
-class Program
-{
-    static void Main(string[] args)
-    {
-        Console.WriteLine("Hello, World!");
-    }
-}
+var library = new InMemoryMediaLibrary();
+var scoreCalculator = new RatingScoreCalculator();
+var watchlist = new WatchlistService(library, scoreCalculator);
+var app = new WatchlistConsoleApp(watchlist);
+
+app.Run();
