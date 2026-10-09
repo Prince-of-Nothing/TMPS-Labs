@@ -16,7 +16,6 @@ Lab 0 focuses on three SOLID principles without a database or UI framework.
 | Lab | Branch | Topic |
 |---|---|---|
 | Lab 0 | `Lab-0` | Project setup + SRP, OCP, and DIP |
-| Lab 1+ | `Lab-N` | Creational, structural, and behavioral design patterns |
 
 ## Lab 0 — SOLID principles
 
@@ -38,7 +37,7 @@ The classes divide the watchlist's responsibilities:
 | `MediaLabel` | Represent a category or tag with its own ID and name |
 | `InMemoryMediaLibrary` | Store categories, tags, and media items in memory |
 | `WatchlistService` | Coordinate watchlist operations using the library and scoring policy |
-| `RatingScoreCalculator` | Convert a 1–10 rating into a score out of 100 |
+| `RatingScoreCalculator` | Convert a 1–10 rating into a five-star score |
 | `WatchlistConsoleApp` | Read commands and display results in the console |
 
 If the score formula changes, only the score policy needs to change. If the
@@ -57,10 +56,10 @@ public interface IMediaScoreCalculator
 }
 ```
 
-The current `RatingScoreCalculator` multiplies a 1–10 rating by ten. To add
-another scoring policy, create a class implementing `IMediaScoreCalculator`
-and select it in `Program.cs`; `WatchlistService` can use it without being
-modified.
+The current `RatingScoreCalculator` divides a 1–10 rating by two, producing
+half-star values from 0.5 to 5. To add another scoring policy, create a class
+implementing `IMediaScoreCalculator` and select it in `Program.cs`;
+`WatchlistService` can use it without being modified.
 
 ### 3. Dependency Inversion Principle (DIP)
 
@@ -102,6 +101,3 @@ its tags. New names are created automatically; matching ignores case. The app
 stores data in memory, so it resets after exit. See
 [DOCUMENTATION.md](./DOCUMENTATION.md) for the detailed class mapping and
 workflow.
-
-The earlier PostgreSQL/web experiment is retained locally at
-`archive/lab0-web-postgres/` and is ignored by Git.

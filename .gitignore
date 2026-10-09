@@ -5,3 +5,13 @@ riderModule.iml
 /_ReSharper.Caches/
 Lab0/.env
 /archive/
+
+# Local report drafts / generated documents
+*.doc
+*.docx
+*.pdf
+/Raport_Lab_0_TMPS.md
+/Lab0/Raport_Lab_0_TMPS.docx
+/Model_Raport Practica_30__2025.doc
+/Report.pdf
+/trash/

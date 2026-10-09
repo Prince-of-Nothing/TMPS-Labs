@@ -25,7 +25,7 @@ public sealed class WatchlistService(IMediaLibrary library, IMediaScoreCalculato
 
     public void Rate(int id, int rating) => FindMedia(id).Rate(rating);
 
-    public int? GetScore(MediaItem item) => scoreCalculator.Calculate(item.Rating);
+    public decimal? GetScore(MediaItem item) => scoreCalculator.Calculate(item.Rating);
 
     public IReadOnlyCollection<MediaItem> Items => library.Items;
 

@@ -117,7 +117,7 @@ public sealed class WatchlistConsoleApp(WatchlistService watchlist)
                 ? "no tags"
                 : string.Join(", ", item.Tags.Select(FormatLabel));
             var rating = item.Rating is int value
-                ? $"{value}/10 (score {watchlist.GetScore(item)}/100)"
+                ? $"{value}/10 ({watchlist.GetScore(item):0.#}/5 stars)"
                 : "not rated";
             var status = item.IsConsumed ? "consumed" : "planned";
 

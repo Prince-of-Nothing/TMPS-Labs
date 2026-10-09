@@ -45,7 +45,7 @@ console interaction:
 | `MediaLabel` | Represent a category or tag with its own ID and name |
 | `InMemoryMediaLibrary` | Store categories, tags, and media items in memory |
 | `WatchlistService` | Coordinate watchlist operations using the library and scoring policy |
-| `RatingScoreCalculator` | Convert a 1–10 rating into a score out of 100 |
+| `RatingScoreCalculator` | Convert a 1–10 rating into a five-star score |
 | `WatchlistConsoleApp` | Read commands and display results in the console |
 
 For example, changing how scores are calculated does not require changing
@@ -66,9 +66,10 @@ public interface IMediaScoreCalculator
 ```
 
 `WatchlistService` uses this abstraction to calculate a score. The current
-`RatingScoreCalculator` maps a rating of 1–10 to a score of 10–100. To try a
-different scoring rule, add another implementation of `IMediaScoreCalculator`
-and select it in `Program.cs`; the watchlist service does not need to change.
+`RatingScoreCalculator` divides a rating of 1–10 by two, producing half-star
+values from 0.5 to 5. To try a different scoring rule, add another
+implementation of `IMediaScoreCalculator` and select it in `Program.cs`; the
+watchlist service does not need to change.
 
 ### 3. Dependency Inversion Principle (DIP)
 
