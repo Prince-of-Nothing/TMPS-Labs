@@ -13,10 +13,45 @@ tags by ID or name. New names are created automatically, and name matching
 ignores letter case.
 Lab 0 focuses on three SOLID principles without a database or UI framework.
 
+<<<<<<< Updated upstream
 | Lab | Branch | Topic |
 |---|---|---|
 | Lab 0 | `Lab-0` | Project setup + SRP, OCP, and DIP |
 | Lab 1+ | `Lab-N` | Creational, structural, and behavioral design patterns |
+=======
+## Goals and scope
+
+The lab demonstrates how to separate responsibilities, make a policy
+replaceable, and keep application logic dependent on abstractions. It focuses
+on the Single Responsibility Principle (SRP), Open/Closed Principle (OCP),
+and Dependency Inversion Principle (DIP).
+
+The application can:
+
+- Create or reuse categories and tags.
+- Add and edit media items with a title, category, and optional tags.
+- Mark an item as consumed and rate it from 1 to 10.
+- Display the watchlist, status, rating, and calculated five-star score.
+- Refer to media items, categories, and tags by ID; category and tag IDs are
+  separate.
+
+Categories and tags can be entered by name or ID. New names are created
+automatically, and matching ignores letter case. The watchlist is saved as
+JSON at `%LOCALAPPDATA%\TMPS-Labs\Lab0\watchlist.json` and restored when the
+application starts. Set `TMPS_LAB0_WATCHLIST_PATH` to use a different file.
+
+## Architecture and SOLID in the code
+
+| Type | Role | Principle connection |
+|---|---|---|
+| `MediaItem` | Holds media state and enforces consumption/rating rules | SRP |
+| `MediaLabel` | Represents a category or tag with an ID and name | SRP |
+| `JsonMediaLibrary` | Loads and saves items, categories, and tags as JSON | SRP; implements `IMediaLibrary` |
+| `WatchlistService` | Coordinates watchlist operations | SRP; depends on abstractions (DIP) |
+| `RatingScoreCalculator` | Converts a rating to a five-star score | SRP; one implementation of the OCP extension point |
+| `WatchlistConsoleApp` | Reads commands and writes console output | SRP |
+| `Program.cs` | Creates and connects concrete application components | Composition root for DIP |
+>>>>>>> Stashed changes
 
 ## Lab 0 — SOLID principles
 
@@ -26,7 +61,14 @@ replaceable `IMediaScoreCalculator` policy. DIP is demonstrated by
 `WatchlistService` depending on the `IMediaLibrary` and
 `IMediaScoreCalculator` abstractions.
 
+<<<<<<< Updated upstream
 ### 1. Single Responsibility Principle (SRP)
+=======
+The console UI, use-case coordination, JSON persistence, media rules, and
+score calculation are kept in separate types. For example, changing the
+score formula belongs in the calculator, while changing command prompts
+belongs in the console app.
+>>>>>>> Stashed changes
 
 > A class should have only one reason to change.
 
@@ -79,7 +121,7 @@ public sealed class WatchlistService(
 `Program.cs` connects the concrete implementations at startup:
 
 ```csharp
-var library = new InMemoryMediaLibrary();
+var library = new JsonMediaLibrary();
 var scoreCalculator = new RatingScoreCalculator();
 var watchlist = new WatchlistService(library, scoreCalculator);
 ```
@@ -103,5 +145,12 @@ stores data in memory, so it resets after exit. See
 [DOCUMENTATION.md](./DOCUMENTATION.md) for the detailed class mapping and
 workflow.
 
+<<<<<<< Updated upstream
 The earlier PostgreSQL/web experiment is retained locally at
 `archive/lab0-web-postgres/` and is ignored by Git.
+=======
+This lab intentionally has no database, graphical interface, or network
+connection. JSON persistence keeps the watchlist between runs. Possible later
+extensions include a database-backed `IMediaLibrary` implementation,
+additional score policies, automated tests, and richer media-specific details.
+>>>>>>> Stashed changes

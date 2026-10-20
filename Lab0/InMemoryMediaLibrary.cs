@@ -34,6 +34,10 @@ public sealed class InMemoryMediaLibrary : IMediaLibrary
 
     public MediaItem? FindMedia(int id) => _items.FirstOrDefault(item => item.Id == id);
 
+    public void Save()
+    {
+    }
+
     private MediaLabel ResolveCategory(string category) =>
         ResolveLabel(category, _categories, AddCategory, "category");
 

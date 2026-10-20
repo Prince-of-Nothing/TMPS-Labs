@@ -30,7 +30,9 @@ categories and tags, add and edit titles, mark items as consumed, and rate
 consumed items from 1 to 10. Each media item, category, and tag has an ID.
 When assigning categories or tags, you can enter the ID or name. New names are
 created automatically, and matching ignores letter case (for example,
-`mANGA` reuses `Manga`).
+`mANGA` reuses `Manga`). The watchlist is saved as JSON at
+`%LOCALAPPDATA%\TMPS-Labs\Lab0\watchlist.json`; set
+`TMPS_LAB0_WATCHLIST_PATH` to use a different file.
 
 ### 1. Single Responsibility Principle (SRP)
 
@@ -43,7 +45,7 @@ console interaction:
 |---|---|
 | `MediaItem` | Hold a title, category, tags, consumed state, and rating; enforce its rating rules |
 | `MediaLabel` | Represent a category or tag with its own ID and name |
-| `InMemoryMediaLibrary` | Store categories, tags, and media items in memory |
+| `JsonMediaLibrary` | Load and save categories, tags, and media items as JSON |
 | `WatchlistService` | Coordinate watchlist operations using the library and scoring policy |
 | `RatingScoreCalculator` | Convert a 1–10 rating into a score out of 100 |
 | `WatchlistConsoleApp` | Read commands and display results in the console |
@@ -89,12 +91,12 @@ public sealed class WatchlistService(
 implementations are selected at the composition root in `Program.cs`:
 
 ```csharp
-var library = new InMemoryMediaLibrary();
+var library = new JsonMediaLibrary();
 var scoreCalculator = new RatingScoreCalculator();
 var watchlist = new WatchlistService(library, scoreCalculator);
 ```
 
-This keeps the watchlist operations independent of the in-memory storage and
+This keeps the watchlist operations independent of the JSON storage and
 the particular scoring formula.
 
 ### Running Lab 0
@@ -106,8 +108,8 @@ dotnet run --project .\Lab0\Lab0.csproj
 ```
 
 Type `help` in the app to see the commands. `add` and `edit` accept category
-and tag IDs or names; entering a new name creates it. The data is held in
-memory and is cleared when the app exits.
+and tag IDs or names; entering a new name creates it. The watchlist persists
+between runs in the JSON file at the path shown when the app starts.
 
 See [Lab0/README.md](./Lab0/README.md) and
 [Lab0/DOCUMENTATION.md](./Lab0/DOCUMENTATION.md).

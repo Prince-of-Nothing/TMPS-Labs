@@ -21,9 +21,17 @@ public sealed class WatchlistService(IMediaLibrary library, IMediaScoreCalculato
             RequireName(category, "Category"),
             ParseTags(tags));
 
-    public void MarkAsConsumed(int id) => FindMedia(id).MarkAsConsumed();
+    public void MarkAsConsumed(int id)
+    {
+        FindMedia(id).MarkAsConsumed();
+        library.Save();
+    }
 
-    public void Rate(int id, int rating) => FindMedia(id).Rate(rating);
+    public void Rate(int id, int rating)
+    {
+        FindMedia(id).Rate(rating);
+        library.Save();
+    }
 
     public int? GetScore(MediaItem item) => scoreCalculator.Calculate(item.Rating);
 

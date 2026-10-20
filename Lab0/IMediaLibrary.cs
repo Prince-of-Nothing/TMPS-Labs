@@ -17,4 +17,6 @@ public interface IMediaLibrary
     void UpdateMedia(int id, string title, string category, IEnumerable<string> tags);
 
     MediaItem? FindMedia(int id);
+
+    void Save();
 }
