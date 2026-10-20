@@ -62,8 +62,8 @@ public sealed class WatchlistConsoleApp(WatchlistService watchlist)
     {
         Console.WriteLine($"Categories: {FormatLabels(watchlist.Categories)}");
         Console.WriteLine($"Tags: {FormatLabels(watchlist.Tags)}");
-        watchlist.AddMedia(Read("Title"), Read("Category"), Read("Tags (comma-separated; optional)"));
-        Console.WriteLine("Media added to your watchlist.");
+        var item = watchlist.AddMedia(Read("Title"), Read("Category"), Read("Tags (comma-separated; optional)"));
+        Console.WriteLine($"Media added to your watchlist as #{item.Id}.");
     }
 
     private void MarkAsConsumed()
@@ -90,7 +90,7 @@ public sealed class WatchlistConsoleApp(WatchlistService watchlist)
         var tags = enteredTags == "-"
             ? string.Empty
             : string.IsNullOrWhiteSpace(enteredTags)
-                ? string.Join(", ", item.Tags)
+                ? string.Join(", ", item.Tags.Select(tag => tag.Name))
                 : enteredTags;
 
         watchlist.UpdateMedia(id, title, category, tags);
