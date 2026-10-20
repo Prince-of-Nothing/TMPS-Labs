@@ -88,6 +88,31 @@ those concrete implementations at startup.
 Because of this, the service can work with another storage implementation or
 score calculator that satisfies the same interface.
 
+### 3.4 Class-to-principle mapping
+
+The following table shows which classes directly demonstrate each principle
+and how they contribute. A dash means the class supports the application but
+is not a direct example of that principle.
+
+| File or type | SRP | OCP | DIP |
+|---|---|---|---|
+| `Program.cs` | Keeps application composition and startup in one place | Selects which scoring policy to use | Wires concrete implementations to the service |
+| `WatchlistConsoleApp` | Owns console input, commands, and output | — | — |
+| `WatchlistService` | Coordinates use cases and validates required input | Uses the score-calculator extension point | Depends on `IMediaLibrary` and `IMediaScoreCalculator` |
+| `IMediaLibrary` | — | — | Defines the storage abstraction used by the service |
+| `JsonMediaLibrary` | Owns JSON loading and saving | — | Implements the storage abstraction |
+| `InMemoryMediaLibrary` | Owns collection and ID management | — | Also implements the storage abstraction |
+| `MediaItem` | Owns media state and consumption/rating rules | — | — |
+| `MediaLabel` | Represents a category or tag | — | — |
+| `IMediaScoreCalculator` | — | Defines the replaceable scoring policy | Abstract scoring dependency used by the service |
+| `RatingScoreCalculator` | Owns the current score formula | One implementation of the replaceable policy | Concrete implementation supplied at startup |
+
+In short, **SRP** is reflected in the division of work across classes,
+**OCP** is most visible in the scoring interface and its implementations, and
+**DIP** is most visible in the service's interface-based dependencies and the
+composition in `Program.cs`. The table identifies the main examples; it does
+not mean every class implements every principle.
+
 ## 4. User workflow
 
 The application supports these console commands:
