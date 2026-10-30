@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab1.MainPage"
+             Title="Consumed Media Watchlist">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+
+            <Label Text="Add a media item"
+                   FontAttributes="Bold"
+                   FontSize="18" />
+
+            <Entry x:Name="TitleEntry" Placeholder="Title" />
+            <Entry x:Name="CategoryEntry" Placeholder="Category" />
+            <Entry x:Name="TagsEntry" Placeholder="Tags (comma-separated, optional)" />
+
+            <Button Text="Add to watchlist" Clicked="OnAddClicked" />
+
+            <Label x:Name="StatusLabel"
+                   Text=""
+                   FontSize="14"
+                   TextColor="Gray" />
+
+            <Label Text="Your watchlist"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   Margin="0,12,0,0" />
+
+            <CollectionView x:Name="ItemsList">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="12" Margin="0,4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding Title}" FontAttributes="Bold" />
+                                <Label Text="{Binding Detail}" FontSize="13" TextColor="Gray" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
