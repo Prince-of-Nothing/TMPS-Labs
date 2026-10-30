@@ -2,7 +2,7 @@
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 9 MAUI (Android)  
+**Technology:** C# / .NET 10 MAUI (Android)  
 **Year:** 2026
 
 ---
@@ -112,7 +112,7 @@ var library = MediaLibraryStore.Instance.EnsureInitialized(
     new JsonMediaLibrary());
 
 // Anywhere else in the app:
-var same = MediaLibraryStore.Instance.Library; // referenceEquals(library, same) == true
+var same = MediaLibraryStore.Instance.Library; // ReferenceEquals(library, same) == true
 ```
 
 Here the first call creates and stores the library. Every subsequent call returns that identical instance, so the UI, the service and the factories all share one storage.

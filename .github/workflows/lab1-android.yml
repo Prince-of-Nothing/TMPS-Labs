@@ -16,21 +16,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 9
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Install MAUI Android workload
-        run: |
-          dotnet workload config --update-mode workload-set
-          dotnet workload install maui-android --skip-manifest-update
+        run: dotnet workload install maui-android
 
       - name: Publish Android APK
         run: >
           dotnet publish Lab1/Lab1.csproj
           -c Release
-          -f net9.0-android
+          -f net10.0-android
           -p:AndroidKeyStore=false
           -o "${{ github.workspace }}/lab1-apk"
 

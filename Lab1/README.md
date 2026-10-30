@@ -3,7 +3,7 @@
 ## Topic: *Creational Design Patterns*
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# and .NET 9 MAUI (Android)  
+**Technology:** C# and .NET 10 MAUI (Android)  
 **Year:** 2026
 
 ---
@@ -120,17 +120,17 @@ A full report is available at [`Reports/Lab1.md`](../Reports/Lab1.md).
 
 ## Running the project
 
-Requires the **.NET 9 SDK** with the MAUI Android workload:
+Requires the **.NET 10 SDK** with the MAUI Android workload:
 
 ```powershell
 dotnet workload install maui-android
-dotnet build Lab1/Lab1.csproj -f net9.0-android
+dotnet build Lab1/Lab1.csproj -f net10.0-android
 ```
 
 To produce an installable Android APK:
 
 ```powershell
-dotnet publish Lab1/Lab1.csproj -c Release -f net9.0-android -p:AndroidKeyStore=false
+dotnet publish Lab1/Lab1.csproj -c Release -f net10.0-android -p:AndroidKeyStore=false
 ```
 
 ---
