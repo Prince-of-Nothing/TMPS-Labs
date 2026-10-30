@@ -4,7 +4,7 @@
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
 **Technology:** C# and .NET 10 MAUI (Android)  
-**Year:** 2026<br>
+**Year:** 2026
 **Instructor:** Daniel Istrati 
 
 ---
@@ -141,11 +141,3 @@ dotnet publish Lab1/Lab1.csproj -c Release -f net10.0-android -p:AndroidKeyStore
 The GitHub Actions workflow [`.github/workflows/lab1-android.yml`](../.github/workflows/lab1-android.yml) builds the Android APK on every `v*` tag (or manually via **workflow_dispatch**), uploads it as an artifact, and attaches it to a **GitHub Release** automatically.
 
 ---
-
-## Evaluation checklist
-
-- [x] Repository on a git hosting service (GitHub).
-- [x] Separated into modules by responsibility: `client`, `domain` (with `factory` and `models`).
-- [x] At least 3 creational design patterns implemented (Singleton, Builder, Factory Method).
-- [x] README + report with explanation and standard structure.
-- [x] CI that builds the app and publishes a release.
