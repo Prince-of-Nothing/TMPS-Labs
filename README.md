@@ -1,122 +1,170 @@
-# TMPS Labs — Consumed Media Watchlist
+# Lab 0 — Consumed Media Watchlist
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
-**Author:** Dinu Pleșu FAF241  
-**Language:** C# (.NET 8)
+**Author:** Dinu Pleșu, FAF241  
+**Technology:** C# and .NET 8
 
-## About the project
+## 1. Project overview
 
-A semester project about a personal watchlist for media you plan to consume
-or have already consumed. Lab 0 is intentionally small: create categories and
-tags, add and edit media, mark it as consumed, and rate it. Media, categories,
-and tags have IDs. Assign categories and tags by ID or name; new names are
-created automatically, and matching ignores letter case.
+The Consumed Media Watchlist is a console application for tracking films,
+shows, books, games, and other media. Users can add and edit entries, organize
+them with categories and tags, mark them as consumed, and rate consumed media
+from 1 to 10. The displayed score is calculated from the rating on a 100-point
+scale.
 
-| Lab | Branch | Topic |
-|---|---|---|
-| Lab 0 | `Lab-0` | Project setup + three SOLID principles (SRP, OCP, DIP) |
-| Lab 1+ | `Lab-N` | Creational, structural, and behavioral design patterns |
+The application persists its data as JSON. By default, the file is
+`%LOCALAPPDATA%\TMPS-Labs\Lab0\watchlist.json`. The
+`TMPS_LAB0_WATCHLIST_PATH` environment variable can specify a different file.
+Media, categories, tags, consumption status, and ratings are restored when the
+application starts.
 
-## Lab 0 — SOLID principles
+## 2. Application structure
 
-The console project demonstrates SRP by separating media rules, library
-storage, use cases, scoring, and input/output. OCP is demonstrated with the
-replaceable `IMediaScoreCalculator` policy. DIP is demonstrated by
-`WatchlistService` depending on the `IMediaLibrary` and
-`IMediaScoreCalculator` abstractions.
+The application separates user interaction, business operations, data storage,
+domain rules, and score calculation:
 
-Lab 0 is a console-based consumed-media watchlist. It lets you create media
-categories and tags, add and edit titles, mark items as consumed, and rate
-consumed items from 1 to 10. Each media item, category, and tag has an ID.
-When assigning categories or tags, you can enter the ID or name. New names are
-created automatically, and matching ignores letter case (for example,
-`mANGA` reuses `Manga`). The watchlist is saved as JSON at
-`%LOCALAPPDATA%\TMPS-Labs\Lab0\watchlist.json`; set
-`TMPS_LAB0_WATCHLIST_PATH` to use a different file.
-
-### 1. Single Responsibility Principle (SRP)
-
-> A class should have only one reason to change.
-
-The watchlist separates data, storage, business operations, scoring, and
-console interaction:
-
-| Class | Its responsibility |
+| Type | Responsibility |
 |---|---|
-| `MediaItem` | Hold a title, category, tags, consumed state, and rating; enforce its rating rules |
-| `MediaLabel` | Represent a category or tag with its own ID and name |
-| `JsonMediaLibrary` | Load and save categories, tags, and media items as JSON |
-| `WatchlistService` | Coordinate watchlist operations using the library and scoring policy |
-| `RatingScoreCalculator` | Convert a 1–10 rating into a score out of 100 |
-| `WatchlistConsoleApp` | Read commands and display results in the console |
+| `Program.cs` | Composition root; creates the concrete components and starts the app |
+| `WatchlistConsoleApp` | Reads commands and inputs, then displays results and errors |
+| `WatchlistService` | Validates required values and coordinates watchlist operations |
+| `IMediaLibrary` | Defines the storage operations used by the service |
+| `JsonMediaLibrary` | Loads and saves the watchlist JSON file |
+| `InMemoryMediaLibrary` | Manages media and label collections and assigns IDs |
+| `MediaItem` | Holds media state and enforces consumption/rating rules |
+| `MediaLabel` | Represents a category or tag with an ID and name |
+| `IMediaScoreCalculator` | Defines the replaceable score-calculation policy |
+| `RatingScoreCalculator` | Converts a 1–10 rating into a score out of 100 |
 
-For example, changing how scores are calculated does not require changing
-`MediaItem` or the console. Changing the command-line prompts does not require
-changing how media is stored.
+The main runtime flow is:
 
-### 2. Open/Closed Principle (OCP)
+1. `Program.cs` creates `JsonMediaLibrary`; existing JSON data is loaded.
+2. The console application reads a command and collects any required input.
+3. `WatchlistService` validates the input and calls the library.
+4. The library updates the in-memory collections and saves changes to JSON.
+5. The console displays the result. For `list`, it asks the calculator for
+   each item's score.
 
-> Software entities should be open for extension but closed for modification.
+## 3. SOLID principles demonstrated
 
-Scoring is defined by the `IMediaScoreCalculator` interface:
+Lab 0 focuses on the Single Responsibility, Open/Closed, and Dependency
+Inversion principles. It does not claim to demonstrate all five SOLID
+principles.
 
-```csharp
-public interface IMediaScoreCalculator
-{
-    int? Calculate(int? rating);
-}
-```
+### 3.1 Single Responsibility Principle (SRP)
 
-`WatchlistService` uses this abstraction to calculate a score. The current
-`RatingScoreCalculator` maps a rating of 1–10 to a score of 10–100. To try a
-different scoring rule, add another implementation of `IMediaScoreCalculator`
-and select it in `Program.cs`; the watchlist service does not need to change.
+> A class should have one primary responsibility and one reason to change.
 
-### 3. Dependency Inversion Principle (DIP)
+The application separates responsibilities into different types. For example,
+console prompt changes belong in `WatchlistConsoleApp`, persistence changes
+belong in `JsonMediaLibrary`, media state rules belong in `MediaItem`, and
+changes to the score formula belong in `RatingScoreCalculator`.
 
-> High-level modules should not depend on low-level modules; both should
-> depend on abstractions.
+This separation keeps unrelated concerns from accumulating in one large class.
+The classes can still collaborate to complete a user action, but each owns a
+distinct part of that action.
 
-`WatchlistService` receives abstractions rather than constructing concrete
-storage and scoring implementations itself:
+### 3.2 Open/Closed Principle (OCP)
 
-```csharp
-public sealed class WatchlistService(
-    IMediaLibrary library,
-    IMediaScoreCalculator scoreCalculator)
-```
+> Software should allow behavior to be extended without requiring existing
+> high-level code to be modified for each new policy.
 
-`IMediaLibrary` represents the operations the service needs from storage, and
-`IMediaScoreCalculator` represents its scoring policy. The concrete
-implementations are selected at the composition root in `Program.cs`:
+The score policy is represented by `IMediaScoreCalculator`. The current
+`RatingScoreCalculator` implementation multiplies a rating by ten. A different
+scoring policy can implement the same interface and be selected in `Program.cs`.
+`WatchlistService` continues to call the interface, rather than containing a
+specific scoring formula.
 
-```csharp
-var library = new JsonMediaLibrary();
-var scoreCalculator = new RatingScoreCalculator();
-var watchlist = new WatchlistService(library, scoreCalculator);
-```
+### 3.3 Dependency Inversion Principle (DIP)
 
-This keeps the watchlist operations independent of the JSON storage and
-the particular scoring formula.
+> High-level modules should depend on abstractions rather than directly on
+> low-level implementation details.
 
-### Running Lab 0
+`WatchlistService` receives an `IMediaLibrary` and an
+`IMediaScoreCalculator` through its constructor. It does not construct
+`JsonMediaLibrary` or `RatingScoreCalculator` itself. `Program.cs` supplies
+those concrete implementations at startup.
 
-Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download).
+Because of this, the service can work with another storage implementation or
+score calculator that satisfies the same interface.
+
+### 3.4 Class-to-principle mapping
+
+The following table shows which classes directly demonstrate each principle
+and how they contribute. A dash means the class supports the application but
+is not a direct example of that principle.
+
+| File or type | SRP | OCP | DIP |
+|---|---|---|---|
+| `Program.cs` | Keeps application composition and startup in one place | Selects which scoring policy to use | Wires concrete implementations to the service |
+| `WatchlistConsoleApp` | Owns console input, commands, and output | — | — |
+| `WatchlistService` | Coordinates use cases and validates required input | Uses the score-calculator extension point | Depends on `IMediaLibrary` and `IMediaScoreCalculator` |
+| `IMediaLibrary` | — | — | Defines the storage abstraction used by the service |
+| `JsonMediaLibrary` | Owns JSON loading and saving | — | Implements the storage abstraction |
+| `InMemoryMediaLibrary` | Owns collection and ID management | — | Also implements the storage abstraction |
+| `MediaItem` | Owns media state and consumption/rating rules | — | — |
+| `MediaLabel` | Represents a category or tag | — | — |
+| `IMediaScoreCalculator` | — | Defines the replaceable scoring policy | Abstract scoring dependency used by the service |
+| `RatingScoreCalculator` | Owns the current score formula | One implementation of the replaceable policy | Concrete implementation supplied at startup |
+
+In short, **SRP** is reflected in the division of work across classes,
+**OCP** is most visible in the scoring interface and its implementations, and
+**DIP** is most visible in the service's interface-based dependencies and the
+composition in `Program.cs`. The table identifies the main examples; it does
+not mean every class implements every principle.
+
+## 4. User workflow
+
+The application supports these console commands:
+
+| Command | Purpose |
+|---|---|
+| `category` | Create or reuse a category |
+| `tag` | Create or reuse a tag |
+| `add` | Add a media item |
+| `edit` | Change a title, category, or tags |
+| `consumed` | Mark an item as consumed |
+| `rate` | Rate consumed media from 1 to 10 |
+| `list` | Display the saved watchlist and scores |
+| `help` | Show the available commands |
+| `quit` | Exit the application |
+
+Categories and tags can be assigned by name or ID. Names are matched without
+regard to letter case; entering a name that does not exist creates it. A media
+item must be marked as consumed before it can be rated.
+
+Run the application from the repository root with:
 
 ```powershell
 dotnet run --project .\Lab0\Lab0.csproj
 ```
 
-Type `help` in the app to see the commands. `add` and `edit` accept category
-and tag IDs or names; entering a new name creates it. The watchlist persists
-between runs in the JSON file at the path shown when the app starts.
+## 5. Scope and limitations
 
-See [Lab0/README.md](./Lab0/README.md) and
-[Lab0/DOCUMENTATION.md](./Lab0/DOCUMENTATION.md).
+The project uses a local JSON file rather than a database. It is a single-user
+console application and has no graphical interface or network service. JSON
+loading validates the stored format version and reports invalid or unsupported
+data rather than silently replacing it.
 
-## What comes next
+Possible extensions include another `IMediaLibrary` implementation backed by a
+database, additional score-calculation policies, automated tests, and
+media-specific fields.
+
+## 6. Running and using the application
+
+With the .NET 8 SDK installed, run:
+
+```powershell
+dotnet run --project .\Lab0\Lab0.csproj
+```
+
+The `help` command lists the available commands: `category`, `tag`, `add`,
+`edit`, `consumed`, `rate`, `list`, `help`, and `quit`. During editing, a
+blank title or category keeps its current value; a blank tags input also
+keeps the existing tags, while `-` removes all tags.
+
+## 7. Lab 1+ (future)
 
 Later labs can extend this watchlist with design patterns while keeping its
-media, category, and tag concepts: for example, Strategy for alternative
-scoring policies, Factory for creating media types, or Observer for reacting
-to watchlist changes.
+core SOLID principles intact. The architecture remains clean and modular,
+making it easy to add new features without disrupting existing functionality.

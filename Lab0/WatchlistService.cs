@@ -6,20 +6,24 @@ public sealed class WatchlistService(IMediaLibrary library, IMediaScoreCalculato
 
     public MediaLabel AddTag(string name) => library.AddTag(RequireName(name, "Tag"));
 
-    public void AddMedia(string title, string category, string tags)
+    public MediaItem AddMedia(string title, string category, string tags)
     {
-        library.AddMedia(
+        var item = library.AddMedia(
             RequireName(title, "Title"),
             RequireName(category, "Category"),
             ParseTags(tags));
+        return item;
     }
 
-    public void UpdateMedia(int id, string title, string category, string tags) =>
+    public MediaItem UpdateMedia(int id, string title, string category, string tags)
+    {
         library.UpdateMedia(
             id,
             RequireName(title, "Title"),
             RequireName(category, "Category"),
             ParseTags(tags));
+        return FindMedia(id);
+    }
 
     public void MarkAsConsumed(int id)
     {
@@ -33,7 +37,7 @@ public sealed class WatchlistService(IMediaLibrary library, IMediaScoreCalculato
         library.Save();
     }
 
-    public int? GetScore(MediaItem item) => scoreCalculator.Calculate(item.Rating);
+    public decimal? GetScore(MediaItem item) => scoreCalculator.Calculate(item.Rating);
 
     public IReadOnlyCollection<MediaItem> Items => library.Items;
 

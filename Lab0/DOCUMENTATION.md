@@ -23,7 +23,7 @@ principles easy to see before adding features in later labs.
 - `MediaItem` holds one title and enforces its consumed/rating rules.
 - `JsonMediaLibrary` loads and saves categories, tags, and media items.
 - `WatchlistService` coordinates watchlist actions.
-- `RatingScoreCalculator` converts a rating to a score out of 100.
+- `RatingScoreCalculator` converts a 1–10 rating into a score out of 100.
 - `WatchlistConsoleApp` handles the command-line interaction.
 - `Program.cs` connects the pieces and starts the application.
 
@@ -32,6 +32,7 @@ principles easy to see before adding features in later labs.
 > Software entities should be open for extension but closed for modification.
 
 `WatchlistService` calculates scores through `IMediaScoreCalculator`. The
+
 current `RatingScoreCalculator` multiplies a 1–10 rating by ten. A different
 score policy can implement that interface and be selected in `Program.cs`
 without changing the service.
@@ -86,8 +87,7 @@ letter case (`web novel` reuses `Web Novel`). Category and tag IDs are separate.
 Use `edit` to change an item's title, category, or tags. During edit, leave a
 field blank to keep its current value, or enter `-` to remove all tags.
 Consumption status and ratings are managed with the separate `consumed` and
-<<<<<<< Updated upstream
-`rate` commands. Data is cleared when the app exits.
+`rate` commands and are saved to the JSON file.
 
 ## Preserved web/database experiment
 
@@ -95,6 +95,3 @@ The previous web and PostgreSQL version is kept locally in
 `archive/lab0-web-postgres/` for reference. The repository `.gitignore`
 excludes the entire `archive/` folder, so that larger experiment is not part
 of the Lab 0 submission.
-=======
-`rate` commands and are saved to the JSON file.
->>>>>>> Stashed changes
