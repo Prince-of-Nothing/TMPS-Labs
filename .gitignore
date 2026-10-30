@@ -17,5 +17,7 @@ Lab0/.env
 /trash/
 Lab0/Q&A.md
 
+.idea/
+.vscode/
 # VS Code settings that should not be tracked
 .vscode/settings.json
