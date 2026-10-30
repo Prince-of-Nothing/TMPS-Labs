@@ -2,7 +2,7 @@
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 8 MAUI (Android)  
+**Technology:** C# / .NET 9 MAUI (Android)  
 **Year:** 2026
 
 ---
