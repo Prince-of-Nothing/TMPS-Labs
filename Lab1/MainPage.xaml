@@ -5,7 +5,7 @@
              Title="Watchlist"
              BackgroundColor="#F8F6F3">
 
-    <ScrollView Padding="16,12" Spacing="16">
+    <ScrollView Padding="16,12">
         <VerticalStackLayout Spacing="20">
 
             <!-- Header -->

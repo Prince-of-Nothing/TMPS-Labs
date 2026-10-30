@@ -16,6 +16,9 @@
 
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
+
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.120" />
+    <SkipValidateMauiImplicitPackageReferences>true</SkipValidateMauiImplicitPackageReferences>
   </PropertyGroup>
 
 </Project>
