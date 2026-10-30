@@ -2,47 +2,70 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Lab1.MainPage"
-             Title="Consumed Media Watchlist">
+             Title="Watchlist"
+             BackgroundColor="#F8F6F3">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="12">
+    <ScrollView Padding="16,12" Spacing="16">
+        <VerticalStackLayout Spacing="20">
 
-            <Label Text="Add a media item"
-                   FontAttributes="Bold"
-                   FontSize="18" />
+            <!-- Header -->
+            <Label Text="Consumed Media Watchlist"
+                   FontSize="26"
+                   FontWeight="Bold"
+                   TextColor="#1A1525" />
 
-            <Entry x:Name="TitleEntry" Placeholder="Title" />
-            <Entry x:Name="CategoryEntry" Placeholder="Category" />
-            <Entry x:Name="TagsEntry" Placeholder="Tags (comma-separated, optional)" />
+            <!-- Input card -->
+            <Border Stroke="#EAE6DF"
+                    StrokeThickness="1"
+                    BackgroundColor="#FFFFFF"
+                    Padding="16"
+                    StrokeShape="RoundRectangle 16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Add new entry"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           TextColor="#6B5B7A" />
 
-            <Button Text="Add to watchlist" Clicked="OnAddClicked" />
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
+                        <Entry Grid.Row="0" Grid.Column="0" x:Name="TitleEntry" Placeholder="Title" BackgroundColor="#F8F6F3" TextColor="#1A1525" FontSize="14" />
+                        <Button Grid.Row="0" Grid.Column="1" Text="Add" Clicked="OnAddClicked" BackgroundColor="#6B5B7A" TextColor="#FFFFFF" FontWeight="Bold" CornerRadius="8" />
 
-            <Label x:Name="StatusLabel"
-                   Text=""
-                   FontSize="14"
-                   TextColor="Gray" />
+                        <Entry Grid.Row="1" Grid.Column="0" x:Name="CategoryEntry" Placeholder="Category" BackgroundColor="#F8F6F3" TextColor="#1A1525" FontSize="14" />
+                        <Entry Grid.Row="1" Grid.Column="1" x:Name="TagsEntry" Placeholder="Tags (comma-separated)" BackgroundColor="#F8F6F3" TextColor="#1A1525" FontSize="14" />
+                    </Grid>
 
-            <Label Text="Your watchlist"
-                   FontAttributes="Bold"
-                   FontSize="18"
-                   Margin="0,12,0,0" />
+                    <Label x:Name="StatusLabel" Text="" FontSize="12" TextColor="#A0899C" />
+                </VerticalStackLayout>
+            </Border>
 
-            <CollectionView x:Name="ItemsList">
+            <!-- List -->
+            <CollectionView x:Name="ItemsList" SelectionMode="Single">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Border Padding="12" Margin="0,4">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <VerticalStackLayout Spacing="2">
-                                <Label Text="{Binding Title}" FontAttributes="Bold" />
-                                <Label Text="{Binding Detail}" FontSize="13" TextColor="Gray" />
+                        <Border Stroke="#EAE6DF"
+                                BackgroundColor="#FFFFFF"
+                                Padding="14"
+                                Margin="0,4"
+                                StrokeShape="RoundRectangle 14">
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding Title}" FontSize="17" FontWeight="Bold" TextColor="#1A1525" />
+                                        <Label Text="{Binding Description}" FontSize="13" TextColor="#8A7F8C" />
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="1" Text="Edit" Clicked="OnEditItem" CommandParameter="{Binding Id}" BackgroundColor="#6B5B7A" TextColor="#FFFFFF" FontSize="11" CornerRadius="8" Padding="10,4" />
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                                    <Button Grid.Column="0" Text="Consumed" Clicked="OnConsume" CommandParameter="{Binding Id}" BackgroundColor="#B5D3B6" TextColor="#2D4A2E" FontSize="11" CornerRadius="8" />
+                                    <Button Grid.Column="1" Text="Rate" Clicked="OnRate" CommandParameter="{Binding Id}" BackgroundColor="#D3B5C4" TextColor="#4A2E3E" FontSize="11" CornerRadius="8" />
+                                    <Button Grid.Column="2" Text="Delete" Clicked="OnDelete" CommandParameter="{Binding Id}" BackgroundColor="#C4A5A0" TextColor="#4A2E2A" FontSize="11" CornerRadius="8" />
+                                </Grid>
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
