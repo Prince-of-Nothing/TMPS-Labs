@@ -4,7 +4,7 @@
 **Author:** Dinu Pleșu, FAF241  
 **Technology:** C# / .NET 10 MAUI (Android)  
 **Year:** 2026
-
+**Instructor** Istrati Daniel
 ---
 
 ## Objectives
