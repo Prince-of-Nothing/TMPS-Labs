@@ -5,6 +5,7 @@
 **Technology:** C# and .NET 8
 **Instructor:** Daniel Istrati 
 
+**Instructor:** Daniel Istrati 
 ## 1. Project overview
 
 The Consumed Media Watchlist is a console application for tracking films,

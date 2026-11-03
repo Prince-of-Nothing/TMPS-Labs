@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="720" viewBox="0 0 900 720" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="triangle" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M1,1 L13,7 L1,13 z" fill="#fff" stroke="#333" stroke-width="1.4" />
+    </marker>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto">
+      <path d="M1,1 L11,6 L1,11" fill="none" stroke="#333" stroke-width="1.6" />
+    </marker>
+    <style>
+      .cls { fill:#fff; stroke:#333; stroke-width:1.6; }
+      .hdr { font-size:19px; font-weight:700; fill:#222; }
+      .stereo { font-size:13px; font-style:italic; fill:#444; }
+      .op { font-size:14px; fill:#222; }
+      .under { text-decoration:underline; }
+      .client { fill:#f4f4f4; stroke:#333; stroke-width:1.6; }
+      .note { fill:#fbfbdc; stroke:#b7b79a; stroke-width:1.2; }
+      .noteFold { fill:#e6e6c8; stroke:#b7b79a; stroke-width:1.2; }
+      .code { font-family:Consolas, monospace; font-size:13px; fill:#333; }
+      .rel { stroke:#333; stroke-width:1.6; fill:none; }
+      .dep { stroke:#333; stroke-width:1.4; fill:none; stroke-dasharray:6 4; }
+    </style>
+  </defs>
+
+  <!-- code note top -->
+  <rect x="330" y="20" width="320" height="80" class="note" />
+  <path d="M630,20 L650,20 L650,40 L630,40 z" class="noteFold" />
+  <text x="346" y="44" class="code">f = new JsonLibraryFactory()</text>
+  <text x="346" y="66" class="code">IMediaLibrary lib = f.CreateLibrary()</text>
+  <line x1="470" y1="100" x2="470" y2="136" class="dep" />
+
+  <!-- Client -->
+  <rect x="405" y="136" width="130" height="52" rx="3" class="client" />
+  <text x="470" y="168" text-anchor="middle" class="hdr">Client</text>
+
+  <!-- Creator (abstract) -->
+  <g>
+    <rect x="120" y="240" width="270" height="130" class="cls" />
+    <line x1="120" y1="282" x2="390" y2="282" class="rel" />
+    <text x="255" y="264" text-anchor="middle" class="stereo">&#171;abstract&#187;</text>
+    <text x="255" y="280" text-anchor="middle" class="hdr" font-size="17">MediaLibraryFactory</text>
+    <text x="132" y="310" class="op under">+ CreateLibrary(): IMediaLibrary</text>
+    <text x="132" y="332" class="op">(other shared steps..)</text>
+  </g>
+
+  <!-- Concrete creators -->
+  <g>
+    <rect x="120" y="470" width="270" height="110" class="cls" />
+    <line x1="120" y1="512" x2="390" y2="512" class="rel" />
+    <text x="255" y="500" text-anchor="middle" class="hdr" font-size="17">JsonLibraryFactory</text>
+    <text x="132" y="540" class="op under">+ CreateLibrary(): IMediaLibrary</text>
+    <text x="132" y="562" class="code" font-family="Consolas">→ new JsonMediaLibrary()</text>
+  </g>
+
+  <g>
+    <rect x="560" y="470" width="300" height="110" class="cls" />
+    <line x1="560" y1="512" x2="860" y2="512" class="rel" />
+    <text x="710" y="500" text-anchor="middle" class="hdr" font-size="17">InMemoryLibraryFactory</text>
+    <text x="572" y="540" class="op under">+ CreateLibrary(): IMediaLibrary</text>
+    <text x="572" y="562" class="code" font-family="Consolas">→ new InMemoryMediaLibrary()</text>
+  </g>
+
+  <!-- inheritance concrete -> creator -->
+  <path d="M255,470 L255,370" class="rel" marker-end="url(#triangle)" />
+  <path d="M710,470 L710,400 L390,400 L390,340 L390,370" class="rel" fill="none" />
+  <path d="M560,470 L560,400" class="rel" />
+
+  <!-- Product interface -->
+  <g>
+    <rect x="120" y="620" width="200" height="52" rx="3" class="client" />
+    <text x="220" y="642" text-anchor="middle" class="stereo">&#171;interface&#187;</text>
+    <text x="220" y="662" text-anchor="middle" class="hdr" font-size="16">IMediaLibrary</text>
+  </g>
+
+  <!-- Client -> creator dependency -->
+  <path d="M405,168 L360,244" class="dep" marker-end="url(#arrow)" />
+  <text x="360" y="212" class="op">uses</text>
+</svg>

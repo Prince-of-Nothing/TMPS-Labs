@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="560" viewBox="0 0 820 560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <!-- inheritance / realization arrow head (hollow triangle) -->
+    <marker id="triangle" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M1,1 L13,7 L1,13 z" fill="#fff" stroke="#333" stroke-width="1.4" />
+    </marker>
+    <!-- simple open arrow -->
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto">
+      <path d="M1,1 L11,6 L1,11" fill="none" stroke="#333" stroke-width="1.6" />
+    </marker>
+    <style>
+      .cls { fill:#fff; stroke:#333; stroke-width:1.6; }
+      .hdr { font-size:19px; font-weight:700; fill:#222; }
+      .stereo { font-size:13px; font-style:italic; fill:#444; }
+      .attr { font-size:14px; fill:#222; }
+      .op { font-size:14px; fill:#222; }
+      .under { text-decoration:underline; }
+      .client { fill:#f4f4f4; stroke:#333; stroke-width:1.6; }
+      .note { fill:#fbfbdc; stroke:#b7b79a; stroke-width:1.2; }
+      .noteFold { fill:#e6e6c8; stroke:#b7b79a; stroke-width:1.2; }
+      .code { font-family:Consolas, monospace; font-size:13px; fill:#333; }
+      .cmt { font-family:Consolas, monospace; font-size:13px; fill:#7a7a6a; font-style:italic; }
+      .rel { stroke:#333; stroke-width:1.6; fill:none; }
+      .dep { stroke:#333; stroke-width:1.4; fill:none; stroke-dasharray:6 4; }
+    </style>
+  </defs>
+
+  <!-- ===== Singleton class ===== -->
+  <g>
+    <rect x="360" y="60" width="320" height="150" class="cls" />
+    <line x1="360" y1="102" x2="680" y2="102" class="rel" />
+    <line x1="360" y1="146" x2="680" y2="146" class="rel" />
+    <text x="520" y="88" text-anchor="middle" class="hdr">MediaLibraryStore</text>
+    <text x="372" y="128" class="attr under">- instance: MediaLibraryStore</text>
+    <text x="372" y="166" class="op under">- MediaLibraryStore()</text>
+    <text x="372" y="188" class="op under">+ getInstance(): MediaLibraryStore</text>
+    <text x="372" y="204" class="op">+ ensureInitialized(lib): IMediaLibrary</text>
+  </g>
+
+  <!-- self-association loop (static access) -->
+  <path d="M680,80 L740,80 L740,120 L680,120" class="rel" marker-end="url(#arrow)" />
+
+  <!-- ===== IMediaLibrary (product returned) ===== -->
+  <g>
+    <rect x="700" y="250" width="120" height="52" rx="3" class="client" />
+    <text x="760" y="272" text-anchor="middle" class="stereo">&#171;interface&#187;</text>
+    <text x="760" y="292" text-anchor="middle" class="hdr" font-size="15">IMediaLibrary</text>
+  </g>
+  <path d="M600,210 L700,268" class="dep" marker-end="url(#arrow)" />
+  <text x="612" y="250" class="attr">holds one</text>
+
+  <!-- ===== Client ===== -->
+  <rect x="60" y="110" width="150" height="60" rx="3" class="client" />
+  <text x="135" y="146" text-anchor="middle" class="hdr">Client</text>
+  <path d="M210,140 L358,140" class="rel" marker-end="url(#arrow)" />
+
+  <!-- ===== code note ===== -->
+  <path d="M360,300 L360,320 L380,320 L380,300 z" class="noteFold" />
+  <rect x="60" y="320" width="560" height="190" class="note" />
+  <path d="M600,320 L620,320 L620,340 L600,340 z" class="noteFold" />
+  <text x="80" y="352" class="code">if (instance == null) {</text>
+  <text x="80" y="378" class="cmt">  // Note: for a multi-threaded app,</text>
+  <text x="80" y="402" class="cmt">  // wrap this in a lock / use Lazy&lt;T&gt;.</text>
+  <text x="80" y="428" class="code">  instance = <tspan font-weight="700">new</tspan> MediaLibraryStore()</text>
+  <text x="80" y="454" class="code">}</text>
+  <text x="80" y="482" class="code">return instance</text>
+  <line x1="300" y1="210" x2="300" y2="318" class="dep" />
+</svg>
