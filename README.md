@@ -2,8 +2,8 @@
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# and .NET 8
-
+**Technology:** C# and .NET 8 
+**Instructor:** Istrati Daniel
 ## 1. Project overview
 
 The Consumed Media Watchlist is a console application for tracking films,
