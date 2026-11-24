@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab3.CoverPickerPage"
+             Title="Cover search"
+             BackgroundColor="#F8F6F3">
+
+    <Grid Padding="16,12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Entry x:Name="SearchEntry" Placeholder="Search a title..." />
+            <Button Grid.Column="1" Text="Search" Clicked="OnSearchClicked" />
+        </Grid>
+
+        <Label Grid.Row="1" x:Name="StatusLabel" FontSize="12" TextColor="#8A7F8C" />
+
+        <CollectionView Grid.Row="2" x:Name="ResultsList" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <Label Text="Search for a cover to see results." FontSize="13"
+                       TextColor="#8A7F8C" HorizontalOptions="Center" Margin="0,24" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14" Padding="10" Margin="0,4">
+                        <Grid ColumnDefinitions="62,*,Auto" ColumnSpacing="10">
+                            <Border Grid.Column="0" BackgroundColor="#F1EDE7" StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 8" HeightRequest="88" WidthRequest="62">
+                                <Image Source="{Binding Thumbnail}" Aspect="AspectFill" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                <Label Text="{Binding Title}" FontSize="14" FontAttributes="Bold"
+                                       LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Provider}" FontSize="11" TextColor="#8A7F8C" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="2" Text="Use" Clicked="OnUseClicked"
+                                    CommandParameter="{Binding Candidate}" VerticalOptions="Center"
+                                    BackgroundColor="#B5D3B6" TextColor="#2D4A2E" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

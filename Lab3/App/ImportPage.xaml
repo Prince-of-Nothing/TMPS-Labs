@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab3.ImportPage"
+             Title="Import"
+             BackgroundColor="#F8F6F3">
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="Import a list" FontSize="24" FontAttributes="Bold" />
+            <Label Text="AniList reads a public username. MAL reads the XML file from Profile → Export/Import."
+                   FontSize="12" TextColor="#8A7F8C" />
+
+            <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Source" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                    <Picker x:Name="SourcePicker" SelectedIndexChanged="OnSourceChanged" />
+
+                    <VerticalStackLayout x:Name="AniListPanel" Spacing="6">
+                        <Label Text="AniList username" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                        <Entry x:Name="UsernameEntry" Placeholder="e.g. your AniList username" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout x:Name="MalPanel" Spacing="6" IsVisible="False">
+                        <Label Text="MAL export file" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                        <Button Text="Choose XML file" Clicked="OnChooseFileClicked"
+                                BackgroundColor="#EAE6DF" TextColor="#4A2E3E" HorizontalOptions="Start" />
+                        <Label x:Name="FileLabel" Text="No file chosen." FontSize="11" TextColor="#8A7F8C" />
+                    </VerticalStackLayout>
+
+                    <Button Text="Preview" Clicked="OnPreviewClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="#A0899C" />
+            <Label x:Name="PreviewLabel" FontSize="12" TextColor="#6B5B7A" />
+            <Button x:Name="ImportButton" Text="Import" Clicked="OnImportClicked" IsEnabled="False" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
