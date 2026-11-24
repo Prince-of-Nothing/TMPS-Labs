@@ -88,6 +88,9 @@ classes.
 
 ## 3. Adapter
 
+The Mermaid diagrams follow the Refactoring Guru structure: the role is the
+stereotype in the box, and the box title is the real project class.
+
 ### Intent and the real problem
 
 `ICoverCatalog` is the app's target interface:
@@ -114,41 +117,66 @@ means adding a client and an adapter only.
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
+class ConsoleApp {
+  <<Client>>
+}
+class CoverService {
+  <<Client>>
+  +SearchAsync(query, kind, ct) Task
+  +SaveAsync(entryId, candidate, ct) Task
+}
 class ICoverCatalog {
-  <<interface>>
+  <<Target>>
   +SearchAsync(query, kind, ct) Task
 }
 class CoverCandidate {
+  <<DTO>>
   +string Title
   +string ThumbnailUrl
   +string ImageUrl
   +string Provider
 }
-class WikimediaCommonsClient {
-  +SearchAsync(query, limit, ct) Task
-}
 class WikimediaCoverAdapter {
+  <<Adapter>>
   -WikimediaCommonsClient client
   +SearchAsync(query, kind, ct) Task
 }
-class OpenLibraryClient
-class OpenLibraryCoverAdapter
-class TvMazeClient
-class TvMazeCoverAdapter
+class OpenLibraryCoverAdapter {
+  <<Adapter>>
+}
+class TvMazeCoverAdapter {
+  <<Adapter>>
+}
+class WikimediaCommonsClient {
+  <<Adaptee>>
+  +SearchAsync(query, limit, ct) Task
+}
+class OpenLibraryClient {
+  <<Adaptee>>
+}
+class TvMazeClient {
+  <<Adaptee>>
+}
 class RoutingCoverCatalog {
+  <<Router>>
   -Dictionary byKind
   -ICoverCatalog fallback
   +SearchAsync(query, kind, ct) Task
 }
-ICoverCatalog <|.. WikimediaCoverAdapter
-ICoverCatalog <|.. OpenLibraryCoverAdapter
-ICoverCatalog <|.. TvMazeCoverAdapter
-ICoverCatalog <|.. RoutingCoverCatalog
+ConsoleApp --> CoverService : uses
+CoverService --> ICoverCatalog : target
+ICoverCatalog <|.. WikimediaCoverAdapter : implements
+ICoverCatalog <|.. OpenLibraryCoverAdapter : implements
+ICoverCatalog <|.. TvMazeCoverAdapter : implements
+ICoverCatalog <|.. RoutingCoverCatalog : implements
 WikimediaCoverAdapter --> WikimediaCommonsClient : adapts
 OpenLibraryCoverAdapter --> OpenLibraryClient : adapts
 TvMazeCoverAdapter --> TvMazeClient : adapts
-RoutingCoverCatalog o--> ICoverCatalog : picks by kind
+RoutingCoverCatalog o--> ICoverCatalog : delegates by kind
+WikimediaCoverAdapter ..> CoverCandidate : creates
+OpenLibraryCoverAdapter ..> CoverCandidate : creates
+TvMazeCoverAdapter ..> CoverCandidate : creates
 ```
 
 ### Code where the pattern is visible
@@ -201,30 +229,42 @@ must not change `ICoverCatalog` for the client.
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
+class CoverService {
+  <<Client>>
+}
 class ICoverCatalog {
-  <<interface>>
+  <<Component>>
+  +SearchAsync(query, kind, ct) Task
+}
+class RoutingCoverCatalog {
+  <<ConcreteComponent>>
+  -Dictionary byKind
+  -ICoverCatalog fallback
   +SearchAsync(query, kind, ct) Task
 }
 class CoverCatalogDecorator {
-  <<abstract>>
+  <<Decorator>>
   #ICoverCatalog Inner
   +SearchAsync(query, kind, ct) Task*
 }
 class CachingCoverCatalog {
+  <<ConcreteDecorator>>
   -ConcurrentDictionary cache
   +SearchAsync(query, kind, ct) Task
   +Clear()
 }
 class FilteringCoverCatalog {
+  <<ConcreteDecorator>>
   +SearchAsync(query, kind, ct) Task
 }
-class RoutingCoverCatalog
-ICoverCatalog <|.. CoverCatalogDecorator
-CoverCatalogDecorator <|-- CachingCoverCatalog
-CoverCatalogDecorator <|-- FilteringCoverCatalog
+CoverService --> ICoverCatalog : uses
+ICoverCatalog <|.. RoutingCoverCatalog : implements
+ICoverCatalog <|.. CoverCatalogDecorator : implements
 CoverCatalogDecorator o--> ICoverCatalog : wraps
-ICoverCatalog <|.. RoutingCoverCatalog
+CoverCatalogDecorator <|-- CachingCoverCatalog : extends
+CoverCatalogDecorator <|-- FilteringCoverCatalog : extends
+note for CoverCatalogDecorator "Any decorator can wrap any ICoverCatalog; order is a composition choice."
 ```
 
 ### Code where the pattern is visible
@@ -284,39 +324,45 @@ creates the proxy; the client never downloads directly.
 
 ```mermaid
 classDiagram
-direction LR
-class ICoverImage {
-  <<interface>>
-  +GetAsync(ct) Task
-}
-class CoverImageData {
-  +byte[] Bytes
-  +string ContentType
-  +string Source
-}
-class RemoteCoverImage {
-  -HttpClient httpClient
-  -string imageUrl
-  +GetAsync(ct) Task
-}
-class CachedCoverImageProxy {
-  -ICoverImage inner
-  -string cachePath
-  -SemaphoreSlim gate
-  +GetAsync(ct) Task
-}
+direction TB
 class CoverService {
+  <<Client>>
   -ICoverCatalog catalog
   -HttpClient httpClient
   -string coversDirectory
   +SearchAsync(query, kind, ct) Task
   +SaveAsync(entryId, candidate, ct) Task
 }
-ICoverImage <|.. RemoteCoverImage
-ICoverImage <|.. CachedCoverImageProxy
+class ICoverImage {
+  <<Subject>>
+  +GetAsync(ct) Task
+}
+class CoverImageData {
+  <<DTO>>
+  +byte[] Bytes
+  +string ContentType
+  +string Source
+}
+class RemoteCoverImage {
+  <<RealSubject>>
+  -HttpClient httpClient
+  -string imageUrl
+  +GetAsync(ct) Task
+}
+class CachedCoverImageProxy {
+  <<Proxy>>
+  -ICoverImage inner
+  -string cachePath
+  -SemaphoreSlim gate
+  +GetAsync(ct) Task
+}
+CoverService --> ICoverImage : uses
+ICoverImage <|.. RemoteCoverImage : implements
+ICoverImage <|.. CachedCoverImageProxy : implements
 CachedCoverImageProxy --> ICoverImage : delegates on a miss
-CoverService --> ICoverCatalog
 CoverService ..> CachedCoverImageProxy : creates
+CoverService ..> RemoteCoverImage : injects into proxy
+note for CachedCoverImageProxy "A cache hit returns the local file; a miss delegates to the real subject once."
 ```
 
 ### Code where the pattern is visible

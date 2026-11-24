@@ -111,6 +111,9 @@ Lab3/
 
 ## 4. Command
 
+The Mermaid diagrams follow the Refactoring Guru structure: the role is the
+stereotype in the box, and the box title is the real project class.
+
 ### Intent and the real problem
 
 Every mutation should be undoable, and the UI should not own the business
@@ -125,14 +128,12 @@ undo.
 
 ```mermaid
 classDiagram
-direction LR
-class IWatchlistCommand {
-  <<interface>>
-  +string Description
-  +Execute()
-  +Undo()
+direction TB
+class MainPage {
+  <<Client>>
 }
 class CommandInvoker {
+  <<Invoker>>
   -Stack~IWatchlistCommand~ undo
   -Stack~IWatchlistCommand~ redo
   +Execute(command)
@@ -141,7 +142,14 @@ class CommandInvoker {
   +bool CanUndo
   +bool CanRedo
 }
+class IWatchlistCommand {
+  <<Command>>
+  +string Description
+  +Execute()
+  +Undo()
+}
 class WatchlistEditor {
+  <<Receiver>>
   +Add(item)
   +AddMany(items)
   +Update(item, message)
@@ -149,35 +157,52 @@ class WatchlistEditor {
   +Restore(item)
   +Reload()
 }
-class AddMediaCommand
-class EditMediaCommand
-class DeleteMediaCommand
-class SetCoverCommand
-class ImportMediaCommand
+class AddMediaCommand {
+  <<ConcreteCommand>>
+}
+class EditMediaCommand {
+  <<ConcreteCommand>>
+}
+class DeleteMediaCommand {
+  <<ConcreteCommand>>
+}
+class SetCoverCommand {
+  <<ConcreteCommand>>
+}
+class ImportMediaCommand {
+  <<ConcreteCommand>>
+}
 class LifecycleCommand {
-  <<abstract>>
+  <<AbstractCommand>>
   #MediaItem Item
   #WatchlistEditor Editor
   +Undo()
 }
-class ConsumeMediaCommand
-class RateMediaCommand
-class ReopenMediaCommand
-IWatchlistCommand <|.. AddMediaCommand
-IWatchlistCommand <|.. EditMediaCommand
-IWatchlistCommand <|.. DeleteMediaCommand
-IWatchlistCommand <|.. SetCoverCommand
-IWatchlistCommand <|.. ImportMediaCommand
-IWatchlistCommand <|.. LifecycleCommand
-LifecycleCommand <|-- ConsumeMediaCommand
-LifecycleCommand <|-- RateMediaCommand
-LifecycleCommand <|-- ReopenMediaCommand
-CommandInvoker o--> IWatchlistCommand
-AddMediaCommand --> WatchlistEditor
-EditMediaCommand --> WatchlistEditor
-DeleteMediaCommand --> WatchlistEditor
-LifecycleCommand --> WatchlistEditor
-ImportMediaCommand --> WatchlistEditor
+class ConsumeMediaCommand {
+  <<ConcreteCommand>>
+}
+class RateMediaCommand {
+  <<ConcreteCommand>>
+}
+class ReopenMediaCommand {
+  <<ConcreteCommand>>
+}
+MainPage --> CommandInvoker : executes
+CommandInvoker o--> IWatchlistCommand : undo/redo history
+IWatchlistCommand <|.. AddMediaCommand : implements
+IWatchlistCommand <|.. EditMediaCommand : implements
+IWatchlistCommand <|.. DeleteMediaCommand : implements
+IWatchlistCommand <|.. SetCoverCommand : implements
+IWatchlistCommand <|.. ImportMediaCommand : implements
+IWatchlistCommand <|.. LifecycleCommand : implements
+LifecycleCommand <|-- ConsumeMediaCommand : extends
+LifecycleCommand <|-- RateMediaCommand : extends
+LifecycleCommand <|-- ReopenMediaCommand : extends
+AddMediaCommand --> WatchlistEditor : receiver
+EditMediaCommand --> WatchlistEditor : receiver
+DeleteMediaCommand --> WatchlistEditor : receiver
+LifecycleCommand --> WatchlistEditor : receiver
+ImportMediaCommand --> WatchlistEditor : receiver
 ```
 
 ### Code where the pattern is visible
@@ -256,39 +281,49 @@ notification loops.
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
+class MainPage {
+  <<Client>>
+}
 class WatchlistEditor {
+  <<Publisher>>
   +Add(item)
   +Update(item, message)
   +Delete(item)
 }
 class WatchlistEvents {
+  <<Subject>>
   -List~IWatchlistObserver~ observers
   +Subscribe(observer)
   +Unsubscribe(observer)
   +Publish(kind, itemId, message)
 }
 class IWatchlistObserver {
-  <<interface>>
+  <<Observer>>
   +OnChanged(change)
 }
 class StatisticsObserver {
+  <<ConcreteObserver>>
   +WatchlistStatistics Statistics
   +OnChanged(change)
 }
 class ActivityLogObserver {
+  <<ConcreteObserver>>
   +IReadOnlyList~string~ Entries
   +OnChanged(change)
 }
 class DelegateObserver {
+  <<ConcreteObserver>>
   +OnChanged(change)
 }
+MainPage --> WatchlistEvents : subscribes
 WatchlistEditor --> WatchlistEvents : publishes
-WatchlistEvents o--> IWatchlistObserver
-IWatchlistObserver <|.. StatisticsObserver
-IWatchlistObserver <|.. ActivityLogObserver
-IWatchlistObserver <|.. DelegateObserver
+WatchlistEvents o--> IWatchlistObserver : notifies
+IWatchlistObserver <|.. StatisticsObserver : implements
+IWatchlistObserver <|.. ActivityLogObserver : implements
+IWatchlistObserver <|.. DelegateObserver : implements
 StatisticsObserver --> MediaItem : reads snapshot
+note for WatchlistEvents "Owns subscribe/unsubscribe/notify; WatchlistEditor publishes after a save."
 ```
 
 ### Code where the pattern is visible
@@ -362,8 +397,12 @@ next state.
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
+class MainPage {
+  <<Client>>
+}
 class MediaLifecycle {
+  <<Context>>
   -IMediaState state
   +MediaItem Item
   +MediaStatus Status
@@ -374,19 +413,30 @@ class MediaLifecycle {
   +Restore(status, rating)
 }
 class IMediaState {
-  <<interface>>
+  <<State>>
   +MediaStatus Status
   +Consume(lifecycle)
   +Rate(lifecycle, rating)
   +Reopen(lifecycle)
 }
-class PlannedState
-class ConsumedState
-class RatedState
-MediaLifecycle o--> IMediaState
-IMediaState <|.. PlannedState
-IMediaState <|.. ConsumedState
-IMediaState <|.. RatedState
+class PlannedState {
+  <<ConcreteState>>
+}
+class ConsumedState {
+  <<ConcreteState>>
+}
+class RatedState {
+  <<ConcreteState>>
+}
+class MediaItem {
+  <<Data>>
+}
+MainPage --> MediaLifecycle : uses
+MediaLifecycle o--> IMediaState : current state
+IMediaState <|.. PlannedState : implements
+IMediaState <|.. ConsumedState : implements
+IMediaState <|.. RatedState : implements
+MediaLifecycle --> MediaItem : owns
 PlannedState ..> ConsumedState : after Consume
 ConsumedState ..> RatedState : after Rate
 ConsumedState ..> PlannedState : after Reopen
@@ -465,24 +515,33 @@ the context that holds the current one. The Android action sheet calls
 
 ```mermaid
 classDiagram
-direction LR
-class IWatchlistExporter {
-  <<interface>>
-  +string Name
-  +string FileExtension
-  +Export(items) string
+direction TB
+class MainPage {
+  <<Client>>
 }
-class CsvWatchlistExporter
-class MarkdownWatchlistExporter
 class ExportService {
+  <<Context>>
   -IWatchlistExporter exporter
   +string Name
   +Use(exporter)
   +Export(items) string
 }
-IWatchlistExporter <|.. CsvWatchlistExporter
-IWatchlistExporter <|.. MarkdownWatchlistExporter
-ExportService o--> IWatchlistExporter
+class IWatchlistExporter {
+  <<Strategy>>
+  +string Name
+  +string FileExtension
+  +Export(items) string
+}
+class CsvWatchlistExporter {
+  <<ConcreteStrategy>>
+}
+class MarkdownWatchlistExporter {
+  <<ConcreteStrategy>>
+}
+MainPage --> ExportService : chooses format
+ExportService o--> IWatchlistExporter : current strategy
+IWatchlistExporter <|.. CsvWatchlistExporter : implements
+IWatchlistExporter <|.. MarkdownWatchlistExporter : implements
 ```
 
 ### Code where the pattern is visible
