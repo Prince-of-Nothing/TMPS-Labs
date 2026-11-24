@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Lab3"
              x:Class="Lab3.MainPage"
              Title="Watchlist"
              BackgroundColor="#F8F6F3">
@@ -73,7 +74,7 @@
                     </VerticalStackLayout>
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="local:ItemRow">
                         <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
                                 StrokeShape="RoundRectangle 16" Padding="12" Margin="0,4">
                             <Grid ColumnDefinitions="92,*" ColumnSpacing="12">

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Lab3"
              x:Class="Lab3.CoverPickerPage"
              Title="Cover search"
              BackgroundColor="#F8F6F3">
@@ -19,7 +20,7 @@
                        TextColor="#8A7F8C" HorizontalOptions="Center" Margin="0,24" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="local:CoverRow">
                     <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
                             StrokeShape="RoundRectangle 14" Padding="10" Margin="0,4">
                         <Grid ColumnDefinitions="62,*,Auto" ColumnSpacing="10">
