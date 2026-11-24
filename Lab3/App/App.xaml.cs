@@ -11,7 +11,11 @@ public partial class App : Application
     }
 
     protected override Window CreateWindow(IActivationState? activationState) =>
-        new(new NavigationPage(new MainPage(_services)))
+        new(new NavigationPage(new MainPage(_services))
+        {
+            BarBackgroundColor = Color.FromArgb("#1A1525"),
+            BarTextColor = Colors.White,
+        })
         {
             Title = "Watchlist",
         };

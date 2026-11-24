@@ -589,6 +589,12 @@ previews new/duplicate counts, then imports. Covers are resolved from the local
 vault first and fall back to the remote URL, so an entry remains visible even
 if the cover file is missing.
 
+The verified emulator run (Medium_Phone API 37) shows the empty state, then an
+entry added through the UI. The counters updated to 1 total / 1 planned and the
+status line reports the command result:
+
+![Lab 3 running on Android](../docs/lab3-screen.png)
+
 ## 11. Tests and evidence
 
 Command:
@@ -641,12 +647,19 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  14.72 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  12.0 MB
 ```
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
 tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
 workload and JDK 21 and publishes the APK.
+
+Runtime smoke test: the app was installed on the `Medium_Phone_API_37`
+emulator and launched, then an entry was added through the UI. The debug APK
+was signed with the standard Android debug keystore; for a manual install
+without the IDE's fast-deployment step, it also needs
+`-p:EmbedAssembliesIntoApk=true`. A normal IDE deploy handles both steps
+automatically. The screenshot above is from that run.
 
 ## 13. Conclusions
 
