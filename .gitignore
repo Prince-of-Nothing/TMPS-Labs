@@ -1,6 +1,10 @@
 bin/
 obj/
 /packages/
+TestResults/
+*.apk
+*.aab
+.vs/
 riderModule.iml
 /_ReSharper.Caches/
 Lab0/.env

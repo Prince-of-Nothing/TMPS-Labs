@@ -1,170 +1,48 @@
-# Lab 0 — Consumed Media Watchlist
+# TMPS Labs — Consumed Media Watchlist
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# and .NET 8  
-**Instructor:** Istrati Daniel
-## 1. Project overview
+**Instructor:** Istrati Daniel  
+**Technology:** C# / .NET 10
 
-The Consumed Media Watchlist is a console application for tracking films,
-shows, books, games, and other media. Users can add and edit entries, organize
-them with categories and tags, mark them as consumed, and rate consumed media
-from 1 to 10. The displayed score is calculated from the rating on a 100-point
-scale.
+The repository follows one domain — a personal consumed-media watchlist —
+through the four labs. Each lab is a separate runnable project and report.
 
-The application persists its data as JSON. By default, the file is
-`%LOCALAPPDATA%\TMPS-Labs\Lab0\watchlist.json`. The
-`TMPS_LAB0_WATCHLIST_PATH` environment variable can specify a different file.
-Media, categories, tags, consumption status, and ratings are restored when the
-application starts.
-
-## 2. Application structure
-
-The application separates user interaction, business operations, data storage,
-domain rules, and score calculation:
-
-| Type | Responsibility |
-|---|---|
-| `Program.cs` | Composition root; creates the concrete components and starts the app |
-| `WatchlistConsoleApp` | Reads commands and inputs, then displays results and errors |
-| `WatchlistService` | Validates required values and coordinates watchlist operations |
-| `IMediaLibrary` | Defines the storage operations used by the service |
-| `JsonMediaLibrary` | Loads and saves the watchlist JSON file |
-| `InMemoryMediaLibrary` | Manages media and label collections and assigns IDs |
-| `MediaItem` | Holds media state and enforces consumption/rating rules |
-| `MediaLabel` | Represents a category or tag with an ID and name |
-| `IMediaScoreCalculator` | Defines the replaceable score-calculation policy |
-| `RatingScoreCalculator` | Converts a 1–10 rating into a score out of 100 |
-
-The main runtime flow is:
-
-1. `Program.cs` creates `JsonMediaLibrary`; existing JSON data is loaded.
-2. The console application reads a command and collects any required input.
-3. `WatchlistService` validates the input and calls the library.
-4. The library updates the in-memory collections and saves changes to JSON.
-5. The console displays the result. For `list`, it asks the calculator for
-   each item's score.
-
-## 3. SOLID principles demonstrated
-
-Lab 0 focuses on the Single Responsibility, Open/Closed, and Dependency
-Inversion principles. It does not claim to demonstrate all five SOLID
-principles.
-
-### 3.1 Single Responsibility Principle (SRP)
-
-> A class should have one primary responsibility and one reason to change.
-
-The application separates responsibilities into different types. For example,
-console prompt changes belong in `WatchlistConsoleApp`, persistence changes
-belong in `JsonMediaLibrary`, media state rules belong in `MediaItem`, and
-changes to the score formula belong in `RatingScoreCalculator`.
-
-This separation keeps unrelated concerns from accumulating in one large class.
-The classes can still collaborate to complete a user action, but each owns a
-distinct part of that action.
-
-### 3.2 Open/Closed Principle (OCP)
-
-> Software should allow behavior to be extended without requiring existing
-> high-level code to be modified for each new policy.
-
-The score policy is represented by `IMediaScoreCalculator`. The current
-`RatingScoreCalculator` implementation multiplies a rating by ten. A different
-scoring policy can implement the same interface and be selected in `Program.cs`.
-`WatchlistService` continues to call the interface, rather than containing a
-specific scoring formula.
-
-### 3.3 Dependency Inversion Principle (DIP)
-
-> High-level modules should depend on abstractions rather than directly on
-> low-level implementation details.
-
-`WatchlistService` receives an `IMediaLibrary` and an
-`IMediaScoreCalculator` through its constructor. It does not construct
-`JsonMediaLibrary` or `RatingScoreCalculator` itself. `Program.cs` supplies
-those concrete implementations at startup.
-
-Because of this, the service can work with another storage implementation or
-score calculator that satisfies the same interface.
-
-### 3.4 Class-to-principle mapping
-
-The following table shows which classes directly demonstrate each principle
-and how they contribute. A dash means the class supports the application but
-is not a direct example of that principle.
-
-| File or type | SRP | OCP | DIP |
+| Lab | Topic | Client | Report |
 |---|---|---|---|
-| `Program.cs` | Keeps application composition and startup in one place | Selects which scoring policy to use | Wires concrete implementations to the service |
-| `WatchlistConsoleApp` | Owns console input, commands, and output | — | — |
-| `WatchlistService` | Coordinates use cases and validates required input | Uses the score-calculator extension point | Depends on `IMediaLibrary` and `IMediaScoreCalculator` |
-| `IMediaLibrary` | — | — | Defines the storage abstraction used by the service |
-| `JsonMediaLibrary` | Owns JSON loading and saving | — | Implements the storage abstraction |
-| `InMemoryMediaLibrary` | Owns collection and ID management | — | Also implements the storage abstraction |
-| `MediaItem` | Owns media state and consumption/rating rules | — | — |
-| `MediaLabel` | Represents a category or tag | — | — |
-| `IMediaScoreCalculator` | — | Defines the replaceable scoring policy | Abstract scoring dependency used by the service |
-| `RatingScoreCalculator` | Owns the current score formula | One implementation of the replaceable policy | Concrete implementation supplied at startup |
+| [Lab 0](Lab0/README.md) | SOLID principles | .NET console | [Report](Lab0/Report.md) |
+| [Lab 1](Lab1/README.md) | Creational patterns | .NET MAUI Android | [Report](Reports/Lab1.md) |
+| [Lab 2](Lab2/README.md) | Structural patterns | .NET console | [Report](Reports/Lab2.md) |
+| [Lab 3](Lab3/README.md) | Behavioral patterns | .NET MAUI Android | [Report](Reports/Lab3.md) |
 
-In short, **SRP** is reflected in the division of work across classes,
-**OCP** is most visible in the scoring interface and its implementations, and
-**DIP** is most visible in the service's interface-based dependencies and the
-composition in `Program.cs`. The table identifies the main examples; it does
-not mean every class implements every principle.
+## Shared domain
 
-## 4. User workflow
+Lab 2's `Lab2/Core/Watchlist.Core` project is the shared domain and storage
+layer for Labs 2 and 3. It contains:
 
-The application supports these console commands:
+- the Markdown vault (`index.md`, `entries/*.md`, `covers/`) and its parser;
+- the media model and the reused Builder/Factory Method;
+- the structural cover pipeline (Adapter, Decorator, Proxy).
 
-| Command | Purpose |
-|---|---|
-| `category` | Create or reuse a category |
-| `tag` | Create or reuse a tag |
-| `add` | Add a media item |
-| `edit` | Change a title, category, or tags |
-| `consumed` | Mark an item as consumed |
-| `rate` | Rate consumed media from 1 to 10 |
-| `list` | Display the saved watchlist and scores |
-| `help` | Show the available commands |
-| `quit` | Exit the application |
+Lab 3 references that project and adds the behavioral layer in
+`Lab3/Behavioral/Watchlist.Behavioral` (Command, Observer, State, Strategy,
+AniList/MAL import and CSV/Markdown export).
 
-Categories and tags can be assigned by name or ID. Names are matched without
-regard to letter case; entering a name that does not exist creates it. A media
-item must be marked as consumed before it can be rated.
-
-Run the application from the repository root with:
+## Run everything
 
 ```powershell
-dotnet run --project .\Lab0\Lab0.csproj
+# Console lab
+dotnet run --project .\Lab2\Console\Lab2.csproj
+
+# Tests for both labs
+dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
+
+# Android lab (needs MAUI workload, JDK 21, Android SDK)
+dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
 ```
 
-## 5. Scope and limitations
+The Markdown library is readable and editable without the app. Open
+`index.md` for the overview, or any entry file for the notes.
 
-The project uses a local JSON file rather than a database. It is a single-user
-console application and has no graphical interface or network service. JSON
-loading validates the stored format version and reports invalid or unsupported
-data rather than silently replacing it.
-
-Possible extensions include another `IMediaLibrary` implementation backed by a
-database, additional score-calculation policies, automated tests, and
-media-specific fields.
-
-## 6. Running and using the application
-
-With the .NET 8 SDK installed, run:
-
-```powershell
-dotnet run --project .\Lab0\Lab0.csproj
-```
-
-The `help` command lists the available commands: `category`, `tag`, `add`,
-`edit`, `consumed`, `rate`, `list`, `help`, and `quit`. During editing, a
-blank title or category keeps its current value; a blank tags input also
-keeps the existing tags, while `-` removes all tags.
-
-## 7. Lab 1+ (future)
-
-Later labs can extend this watchlist with design patterns while keeping its
-core SOLID principles intact. The architecture remains clean and modular,
-making it easy to add new features without disrupting existing functionality.
+The design record is in
+[`docs/superpowers/specs/2026-11-24-labs-2-3-watchlist-design.md`](docs/superpowers/specs/2026-11-24-labs-2-3-watchlist-design.md).
