@@ -105,6 +105,15 @@ dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
 
 APK output: `Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk`.
 
+Pushing a `labs-v*` tag builds the release APK in CI and attaches it to the
+GitHub Release (the workflow also publishes the Lab 2 Windows zip and both
+reports):
+
+```powershell
+git tag labs-v1.0
+git push origin labs-v1.0
+```
+
 ## Tests
 
 ```powershell

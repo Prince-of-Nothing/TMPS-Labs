@@ -123,3 +123,6 @@ adapters, decorator order and caching, proxy caching/validation/concurrency,
 and the Lab 3 behavioral patterns.
 
 Full report: [`../Reports/Lab2.md`](../Reports/Lab2.md).
+
+A `labs-v*` tag also publishes a self-contained `Lab2-win-x64.zip` in the
+GitHub Release, together with the Lab 3 APK and both reports.

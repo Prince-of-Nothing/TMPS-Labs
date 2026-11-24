@@ -755,7 +755,9 @@ A Release publish with the same command as CI (`-c Release`,
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
 tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
-workload and JDK 21 and publishes the APK.
+workload and JDK 21 and publishes the APK. The `labs-release.yml` workflow runs
+on `labs-v*` tags, runs the tests, publishes the self-contained Lab 2 zip and
+the signed Lab 3 APK, and attaches both plus the reports to a GitHub Release.
 
 Runtime smoke test: the app was installed on the `Medium_Phone_API_37`
 emulator. The first-run storage page was shown; shared Documents was chosen,

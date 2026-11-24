@@ -28,6 +28,21 @@ Lab 3 references that project and adds the behavioral layer in
 `Lab3/Behavioral/Watchlist.Behavioral` (Command, Observer, State, Strategy,
 AniList/MAL import and CSV/Markdown export).
 
+## Releases
+
+Pushing a tag such as `labs-v1.0` runs
+[`.github/workflows/labs-release.yml`](.github/workflows/labs-release.yml):
+it runs the tests, publishes a self-contained Windows build of Lab 2, builds
+and signs the Lab 3 APK, and attaches both plus the reports to a GitHub
+Release.
+
+```powershell
+git tag labs-v1.0
+git push origin labs-v1.0
+```
+
+Lab 1 keeps its own `v*` release workflow.
+
 ## Run everything
 
 ```powershell
