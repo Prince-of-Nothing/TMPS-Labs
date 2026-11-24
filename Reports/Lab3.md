@@ -592,7 +592,9 @@ in the Files app. The first launch therefore shows `StorageSetupPage`:
   the package. On older Android it requests the normal storage runtime
   permission. Once granted, the app creates the folder, copies any existing
   app-private entries/covers with `VaultMigrator` (without overwriting target
-  files), and stores the path in `Preferences`.
+  files), and stores the path in `Preferences`. This prompt was verified on the
+  emulator: with the permission denied, tapping the button focused the
+  “All files access → Watchlist” system screen.
 - **App storage** — `FileSystem.AppDataDirectory/library`; no permission, but
   not directly visible in Files. Export/share remains available.
 
@@ -690,7 +692,7 @@ Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  11.2 MB
 
 A Release publish with the same command as CI (`-c Release`,
 `-p:AndroidKeyStore=false`) also completed with AOT compilation and produced a
-27.5 MB APK.
+27.9 MB APK.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
 tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
