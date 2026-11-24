@@ -63,6 +63,7 @@ Lab2/
 │   │   ├── MarkdownWatchlistStore.cs
 │   │   ├── MarkdownEntryCodec.cs
 │   │   ├── VaultIndexWriter.cs
+│   │   ├── VaultMigrator.cs      copy between storage locations
 │   │   ├── WatchlistRepository.cs
 │   │   └── WatchlistStoreFactory.cs reused Factory Method
 │   └── CoverSearch/
@@ -456,12 +457,12 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Result from the verified run:
 
 ```text
-Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 105 ms
+Passed!  - Failed:     0, Passed:    49, Skipped:     0, Total:    49, Duration: 110 ms
 ```
 
-The 47 tests include the Markdown vault (codec, unknown keys, malformed files,
-index, repository), the three cover patterns and the Lab 3 behavioral tests in
-the same test project. Test names are listed in section 3–5 for the structural
+The 49 tests include the Markdown vault (codec, unknown keys, malformed files,
+index, repository, migration), the three cover patterns and the Lab 3
+behavioral tests in the same test project. Test names are listed in section 3–5 for the structural
 patterns; the project compiles with:
 
 ```text

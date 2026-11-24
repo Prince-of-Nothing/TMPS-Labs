@@ -12,17 +12,30 @@ project and the same Markdown vault), adds a visual cover picker, undo/redo,
 live statistics, a guarded entry lifecycle, filters/sorting and AniList / MAL
 import.
 
-The vault is still portable:
+The vault is a folder of Markdown files. On first launch you choose where it
+lives:
 
 ```text
-<app data>/library/
+/storage/emulated/0/Documents/TMPS-Watchlist/   shared, visible in Files
   index.md
   entries/0001-the-matrix.md
   covers/0001.jpg
 ```
 
-Set `TMPS_LAB3_LIBRARY` to point at another folder; otherwise the app uses
-`FileSystem.AppDataDirectory/library`.
+- **Shared Documents** asks for Android’s “All files access” permission, then
+  creates `Documents/TMPS-Watchlist`. It is visible in the Files app and any
+  text editor.
+- **App storage** uses `FileSystem.AppDataDirectory/library` and needs no
+  permission, but is private to the app.
+- Existing app-private entries/covers are copied into the chosen folder without
+  overwriting files already there.
+- The choice is remembered. If the folder becomes unavailable or the permission
+  is revoked, the setup screen appears again.
+- `TMPS_LAB3_LIBRARY` overrides the location for desktop/testing.
+
+`MANAGE_EXTERNAL_STORAGE` is fine for a sideloaded lab APK; Google Play
+restricts that permission for general apps. A production app would use the
+Storage Access Framework folder picker instead.
 
 ## Project layout
 
@@ -39,6 +52,8 @@ Lab3/
     EditPage               metadata + cover entry point
     CoverPickerPage        provider search + local download
     ImportPage             AniList username / MAL XML preview + import
+    StorageSetupPage       first-run folder + permission choice
+    StorageLocations       shared/app paths + permission flow
 ```
 
 ## Behavioral patterns
@@ -98,6 +113,6 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 
 The suite covers command undo/redo, observer subscription and failure
 isolation, all state transitions, strategy switching, AniList/MAL mapping,
-duplicate detection and import undo.
+duplicate detection, import undo and vault migration.
 
 Full report: [`../Reports/Lab3.md`](../Reports/Lab3.md).

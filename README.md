@@ -42,7 +42,10 @@ dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
 ```
 
 The Markdown library is readable and editable without the app. Open
-`index.md` for the overview, or any entry file for the notes.
+`index.md` for the overview, or any entry file for the notes. On first launch
+Lab 3 asks whether to keep the vault in shared `Documents/TMPS-Watchlist`
+(visible in the Android Files app, with an All files access prompt) or in
+app-private storage.
 
 The design record is in
 [`docs/superpowers/specs/2026-11-24-labs-2-3-watchlist-design.md`](docs/superpowers/specs/2026-11-24-labs-2-3-watchlist-design.md).

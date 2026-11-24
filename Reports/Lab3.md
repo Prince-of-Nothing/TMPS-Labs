@@ -16,14 +16,20 @@ behavior a real user expects: undo/redo, live counters, a guarded
 planned → consumed → rated lifecycle, runtime filtering and export format
 selection, a visual cover picker, and import from AniList or a MAL XML export.
 
-The library remains portable:
+The library remains portable. On first launch the user chooses a location:
 
 ```text
-<app data>/library/
+/storage/emulated/0/Documents/TMPS-Watchlist/   shared, visible in Files
   index.md
   entries/0001-the-matrix.md
   covers/0001.jpg
 ```
+
+The no-permission fallback is `FileSystem.AppDataDirectory/library`. The shared
+folder needs Android's “All files access” permission; it is the option that
+makes the Markdown library readable in a normal file manager. Existing entries
+are copied from app storage into the chosen folder without overwriting entries
+that are already there.
 
 The Android client is thin: all behavior lives in
 `Lab3/Behavioral` (`net10.0`) and can be tested without an emulator. The MAUI
@@ -44,6 +50,7 @@ Lab3/App/Lab3.csproj
 Reused from Lab 2:
 
 - `MarkdownWatchlistStore`, `MarkdownEntryCodec`, `WatchlistRepository`;
+- `VaultMigrator` for copying the existing vault into a new location;
 - `MediaItem`, `MediaItemBuilder`;
 - the structural cover pipeline: `ICoverCatalog`, provider adapters,
   filtering/caching decorators, `CachedCoverImageProxy`.
@@ -97,6 +104,8 @@ Lab3/
     ├── EditPage.xaml(.cs)              metadata + cover entry point
     ├── CoverPickerPage.xaml(.cs)       provider search + download
     ├── ImportPage.xaml(.cs)            AniList username / MAL file preview
+    ├── StorageSetupPage.xaml(.cs)      first-run location + permission
+    ├── StorageLocations.cs             shared/app paths + permission flow
     └── AppServices.cs                  composition root
 ```
 
@@ -572,7 +581,34 @@ cache, and opens Android's share sheet. The markdown export is a single file
 with a table and per-entry sections, so it can be sent to someone who does not
 have the app.
 
-## 10. User interface
+## 10. Library location and permissions
+
+Lab 3 is local-first, but on Android app-private storage is not easy to browse
+in the Files app. The first launch therefore shows `StorageSetupPage`:
+
+- **Shared Documents** — target `/storage/emulated/0/Documents/TMPS-Watchlist`.
+  On Android 11+ the page checks `Environment.IsExternalStorageManager`; if it
+  is not granted, the button opens the system “All files access” settings for
+  the package. On older Android it requests the normal storage runtime
+  permission. Once granted, the app creates the folder, copies any existing
+  app-private entries/covers with `VaultMigrator` (without overwriting target
+  files), and stores the path in `Preferences`.
+- **App storage** — `FileSystem.AppDataDirectory/library`; no permission, but
+  not directly visible in Files. Export/share remains available.
+
+On later launches the saved path is reused. If the folder is missing or the
+permission was revoked, the setup page appears again. `TMPS_LAB3_LIBRARY` can
+override the path for desktop/testing.
+
+The shared option uses `MANAGE_EXTERNAL_STORAGE`, which is appropriate for a
+sideloaded lab APK but restricted by Google Play policy for general apps. The
+proper production alternative would be the Storage Access Framework folder
+picker; the current physical-file store keeps the Markdown vault simple and
+fully compatible with Lab 2.
+
+![First-run library storage choice](../docs/lab3-storage.png)
+
+## 11. User interface
 
 `MainPage` shows:
 
@@ -589,13 +625,13 @@ previews new/duplicate counts, then imports. Covers are resolved from the local
 vault first and fall back to the remote URL, so an entry remains visible even
 if the cover file is missing.
 
-The verified emulator run (Medium_Phone API 37) shows the empty state, then an
-entry added through the UI. The counters updated to 1 total / 1 planned and the
-status line reports the command result:
+The verified emulator run (Medium_Phone API 37) chose shared Documents, created
+the vault, restarted into the saved path, then loaded an entry written directly
+into the shared folder. The card shows the cover, rating and the shared path:
 
 ![Lab 3 running on Android](../docs/lab3-screen.png)
 
-## 11. Tests and evidence
+## 12. Tests and evidence
 
 Command:
 
@@ -606,23 +642,25 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Verified result:
 
 ```text
-Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 105 ms
+Passed!  - Failed:     0, Passed:    49, Skipped:     0, Total:    49, Duration: 110 ms
 ```
 
-The Lab 3 tests cover all four claimed patterns, plus the import mapping:
+The Lab 3 tests cover all four claimed patterns, the import mapping and the
+vault migration:
 
 ```text
 Watchlist.Tests.CommandTests.*                 9 tests
 Watchlist.Tests.ObserverTests.*                5 tests
 Watchlist.Tests.StateTests.*                   4 tests
-Watchlist.Tests.ExportTests.*                  3 tests
+Watchlist.Tests.ExportTests.*                   3 tests
 Watchlist.Tests.ImportTests.*                  7 tests
+Watchlist.Tests.VaultMigratorTests.*            2 tests
 ```
 
 Run `dotnet test --list-tests` to see the exact names; the pattern tables in
 sections 4–7 list the names and what each one proves.
 
-## 12. Build evidence
+## 13. Build evidence
 
 The Android client builds with .NET 10, MAUI Android workload, JDK 21 and the
 Android SDK:
@@ -647,25 +685,27 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  14.5 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  11.2 MB
 ```
 
 A Release publish with the same command as CI (`-c Release`,
 `-p:AndroidKeyStore=false`) also completed with AOT compilation and produced a
-27.8 MB APK.
+27.5 MB APK.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
 tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
 workload and JDK 21 and publishes the APK.
 
 Runtime smoke test: the app was installed on the `Medium_Phone_API_37`
-emulator and launched, then an entry was added through the UI. The debug APK
-was signed with the standard Android debug keystore; for a manual install
-without the IDE's fast-deployment step, it also needs
-`-p:EmbedAssembliesIntoApk=true`. A normal IDE deploy handles both steps
-automatically. The screenshot above is from that run.
+emulator. The first-run storage page was shown; shared Documents was chosen,
+`/storage/emulated/0/Documents/TMPS-Watchlist` was created, the app was
+restarted into the saved path, and a Markdown entry placed in the shared
+folder loaded with its cover. The debug APK was signed with the standard
+Android debug keystore; for a manual install without the IDE's fast-deployment
+step, it also needs `-p:EmbedAssembliesIntoApk=true`. A normal IDE deploy
+handles both steps automatically. The screenshots above are from that run.
 
-## 13. Conclusions
+## 14. Conclusions
 
 The hardest part was keeping two sources of truth consistent: the Markdown files
 and the in-memory list/command history. The solution is to make every mutation
@@ -679,3 +719,8 @@ I would add a file watcher or a merge/reload prompt before calling this a
 multi-device app. The current model assumes one app instance at a time. I would
 also add a real film/TV metadata provider with an API key; the keyless
 providers are fine for a lab, but poster relevance is limited.
+
+The storage choice is a platform compromise. Shared Documents makes the vault
+readable outside the app but needs the broad All files access permission; the
+proper production version is a SAF folder picker with a content-URI-backed
+store. App storage remains the safe no-permission fallback.
