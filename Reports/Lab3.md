@@ -647,8 +647,12 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  12.0 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  14.5 MB
 ```
+
+A Release publish with the same command as CI (`-c Release`,
+`-p:AndroidKeyStore=false`) also completed with AOT compilation and produced a
+27.8 MB APK.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
 tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
