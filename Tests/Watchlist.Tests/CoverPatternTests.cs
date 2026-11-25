@@ -235,4 +235,65 @@ public sealed class CoverPatternTests
 
         Assert.Equal("https://x/thumb.jpg", Assert.Single(seen));
     }
+
+    [Fact]
+    public async Task Factory_pipeline_routes_by_kind_filters_and_caches()
+    {
+        const string tvMazeJson = """
+        [
+          { "show": { "name": "Frieren", "url": "https://www.tvmaze.com/shows/1",
+                      "image": { "medium": "https://static.tvmaze.com/m.jpg", "original": "https://static.tvmaze.com/o.jpg" } } },
+          { "show": { "name": "Frieren (dub)", "url": "https://www.tvmaze.com/shows/2",
+                      "image": { "medium": "https://static.tvmaze.com/m.jpg", "original": "https://static.tvmaze.com/o.jpg" } } }
+        ]
+        """;
+        var hosts = new List<string>();
+        var handler = new StubHttpHandler(request =>
+        {
+            hosts.Add(request.RequestUri!.Host);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(tvMazeJson, Encoding.UTF8, "application/json"),
+            };
+        });
+        var catalog = CoverServiceFactory.CreateCatalog(new HttpClient(handler));
+
+        var first = await catalog.SearchAsync("frieren", MediaKind.Anime);
+        var second = await catalog.SearchAsync("Frieren", MediaKind.Anime);
+
+        // Routing sent anime to the TVmaze adapter, filtering dropped the
+        // duplicate image, and caching answered the second search.
+        var hit = Assert.Single(first);
+        Assert.Equal("TVmaze", hit.Provider);
+        Assert.Single(second);
+        Assert.Equal("api.tvmaze.com", Assert.Single(hosts));
+    }
+
+    [Fact]
+    public async Task Factory_pipeline_falls_back_to_wikimedia_when_the_book_source_is_empty()
+    {
+        const string emptyOpenLibrary = """{ "docs": [] }""";
+        const string wikimedia = """
+        { "query": { "pages": [ { "title": "File:Dune cover.jpg",
+          "imageinfo": [{ "thumburl": "https://thumb.example/dune.jpg", "url": "https://upload.example/dune.jpg", "mime": "image/jpeg" }] } ] } }
+        """;
+        var hosts = new List<string>();
+        var handler = new StubHttpHandler(request =>
+        {
+            var host = request.RequestUri!.Host;
+            hosts.Add(host);
+            var body = host.Contains("openlibrary", StringComparison.Ordinal) ? emptyOpenLibrary : wikimedia;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json"),
+            };
+        });
+        var catalog = CoverServiceFactory.CreateCatalog(new HttpClient(handler));
+
+        var hits = await catalog.SearchAsync("dune", MediaKind.Book);
+
+        Assert.Equal("Wikimedia Commons", Assert.Single(hits).Provider);
+        Assert.Equal(2, hosts.Count);
+        Assert.Contains("openlibrary", hosts[0], StringComparison.Ordinal);
+    }
 }

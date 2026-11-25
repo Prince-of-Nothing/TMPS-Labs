@@ -4,10 +4,6 @@ using Watchlist.Behavioral.Export;
 using Watchlist.Behavioral.Import;
 using Watchlist.Behavioral.Observers;
 using Watchlist.Core.CoverSearch;
-using Watchlist.Core.CoverSearch.Adapters;
-using Watchlist.Core.CoverSearch.Decorators;
-using Watchlist.Core.CoverSearch.Providers;
-using Watchlist.Core.Domain;
 using Watchlist.Core.Storage;
 
 namespace Lab3;
@@ -69,22 +65,8 @@ public sealed class AppServices
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("TMPS-Watchlist-Lab3/1.0");
 
-        var wikimedia = new WikimediaCoverAdapter(new WikimediaCommonsClient(http));
-        var openLibrary = new OpenLibraryCoverAdapter(new OpenLibraryClient(http));
-        var tvMaze = new TvMazeCoverAdapter(new TvMazeClient(http));
-        var routing = new RoutingCoverCatalog(
-            new Dictionary<MediaKind, ICoverCatalog>
-            {
-                [MediaKind.Book] = openLibrary,
-                [MediaKind.Manga] = openLibrary,
-                [MediaKind.Series] = tvMaze,
-                [MediaKind.Anime] = tvMaze,
-                [MediaKind.Film] = wikimedia,
-                [MediaKind.Game] = wikimedia,
-            },
-            wikimedia);
-        ICoverCatalog catalog = new FilteringCoverCatalog(new CachingCoverCatalog(routing));
-        var covers = new CoverService(catalog, http, store.CoversPath);
+        // Lab 2's structural pipeline, created inside Core rather than here.
+        var covers = CoverServiceFactory.Create(http, store.CoversPath);
 
         var importers = new IWatchlistImporter[]
         {
