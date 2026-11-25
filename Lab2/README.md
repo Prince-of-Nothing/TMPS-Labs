@@ -51,6 +51,7 @@ Lab2/
     Domain/                MediaItem, MediaKind, MediaStatus, MediaItemBuilder
     Storage/               MarkdownWatchlistStore, codec, index, repository
     CoverSearch/
+      CoverServiceFactory  builds the whole cover pipeline for the clients
       Providers/           Wikimedia, Open Library, TVmaze clients
       Adapters/            provider DTOs -> CoverCandidate
       Decorators/          filtering + caching

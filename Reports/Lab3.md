@@ -8,6 +8,45 @@
 
 ---
 
+## Objectives
+
+1. Study and understand the Behavioral Design Patterns.
+2. As a continuation of the previous laboratory work, think about what
+   communication between software entities might be involved in the system.
+3. Create a new project, or add some additional functionalities, using
+   behavioral design patterns.
+
+## Main tasks
+
+By extending the project, implement at least 1 behavioral design pattern:
+
+- the implemented pattern should help perform the tasks the system offers;
+- the behavioral patterns can be integrated into the functionalities alongside
+  the structural ones;
+- there should be only one client for the whole system.
+
+## Theory
+
+Behavioral patterns describe how objects communicate and divide
+responsibility: who asks for work, who does it, and who hears about the
+result. They make that communication more flexible by replacing hard-wired
+calls and conditionals with objects. The common ones are Chain of
+Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer,
+State, Strategy, Template Method and Visitor.
+
+This lab uses four of them:
+
+- **Command** turns a request into an object, so it can be queued, logged and
+  undone.
+- **Observer** lets one subject notify any number of subscribers about a
+  change without knowing their concrete types.
+- **State** moves state-dependent behavior into one class per state, so the
+  object changes its behavior when its state changes.
+- **Strategy** puts interchangeable algorithms behind one interface and lets
+  the client pick one at runtime.
+
+---
+
 ## 1. Domain description
 
 Lab 3 is the final watchlist application. It keeps the same media domain as
@@ -53,11 +92,16 @@ Reused from Lab 2:
 - `VaultMigrator` for copying the existing vault into a new location;
 - `MediaItem`, `MediaItemBuilder`;
 - the structural cover pipeline: `ICoverCatalog`, provider adapters,
-  filtering/caching decorators, `CachedCoverImageProxy`.
+  filtering/caching decorators, `CachedCoverImageProxy`, assembled by
+  `CoverServiceFactory`.
 
-The cover picker in Lab 3 therefore uses exactly the same Adapter + Decorator +
-Proxy path, and imported AniList/MAL covers can be displayed remotely or saved
-locally through the same proxy.
+`AppServices` gets its `CoverService` from the same `CoverServiceFactory.Create`
+call the Lab 2 console uses, so the cover picker in Lab 3 uses exactly the same
+Adapter + Decorator + Proxy path without repeating its wiring. Imported
+AniList/MAL covers can be displayed remotely or saved locally through the same
+proxy. The behavioral patterns sit on top of that path: choosing a cover is a
+`SetCoverCommand` (undoable), and the save publishes an Observer event that
+refreshes the card.
 
 ## 3. Project structure
 
@@ -703,7 +747,7 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Verified result:
 
 ```text
-Passed!  - Failed:     0, Passed:    49, Skipped:     0, Total:    49, Duration: 110 ms
+Passed!  - Failed:     0, Passed:    51, Skipped:     0, Total:    51, Duration: 142 ms
 ```
 
 The Lab 3 tests cover all four claimed patterns, the import mapping and the
@@ -746,7 +790,7 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  11.2 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  15.5 MB
 ```
 
 A Release publish with the same command as CI (`-c Release`,
@@ -768,7 +812,18 @@ Android debug keystore; for a manual install without the IDE's fast-deployment
 step, it also needs `-p:EmbedAssembliesIntoApk=true`. A normal IDE deploy
 handles both steps automatically. The screenshots above are from that run.
 
-## 14. Conclusions
+## 14. Requirements checklist
+
+| Requirement | Where it is met |
+|---|---|
+| At least 1 behavioral pattern | Command (§4), Observer (§5), State (§6), Strategy (§7) |
+| Patterns perform real tasks of the system | Undo/redo of every edit, live statistics, the guarded lifecycle and the export format switch are all normal app actions (§8) |
+| Behavioral patterns alongside the structural ones | The cover picker runs Lab 2's Adapter → Decorator → Proxy pipeline, and the chosen cover is applied by an undoable `SetCoverCommand` that publishes an Observer event (§2) |
+| One client for the whole system | `Lab3/App`, the MAUI Android app, is the only client of Lab 3 |
+| Modules separated by responsibility | `Commands`, `Observers`, `States`, `Export`, `Import` in `Watchlist.Behavioral`; UI in `App`; domain and storage in Lab 2's `Watchlist.Core` (§3) |
+| Git hosting, README and report | This repository, `Lab3/README.md` and this report |
+
+## 15. Conclusions
 
 The hardest part was keeping two sources of truth consistent: the Markdown files
 and the in-memory list/command history. The solution is to make every mutation
