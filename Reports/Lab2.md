@@ -42,13 +42,14 @@ Lab2/
 │   ├── Storage/                 Markdown vault: entry codec, repository, migrator
 │   └── CoverSearch/
 │       ├── ICoverCatalog.cs     Target interface used by every client
-│       ├── Adapters/            Adapter: Wikimedia, Open Library, TVmaze
-│       ├── Providers/           Adaptee clients for the three public APIs
-│       ├── Decorators/          Filtering and Caching decorators
 │       ├── RoutingCoverCatalog  picks a provider per media kind
 │       ├── CoverServiceFactory  assembles the pipeline in one place
 │       ├── CoverService         use case: search, then save through the proxy
-│       └── Images/              ICoverImage, RemoteCoverImage (real subject), CachedCoverImageProxy
+│       └── Patterns/            one folder per pattern
+│           ├── Adapter/         WikimediaCoverAdapter, OpenLibraryCoverAdapter, TvMazeCoverAdapter
+│           │   └── Adaptees/    the three public API clients (adaptees)
+│           ├── Decorator/       CoverCatalogDecorator, FilteringCoverCatalog, CachingCoverCatalog
+│           └── Proxy/           ICoverImage, RemoteCoverImage (real subject), CachedCoverImageProxy
 ├── App/                         .NET MAUI Android client (pages only, no pattern wiring)
 │   ├── MainPage, EditPage, CoverPickerPage, PatternsPage
 │   └── AppServices.cs           asks the Core factory for a CoverService
@@ -107,7 +108,7 @@ The same shape is used for `OpenLibraryCoverAdapter` → `OpenLibraryClient` and
 
 ### Code where the pattern is visible
 
-[`Lab2/Core/CoverSearch/Adapters/WikimediaCoverAdapter.cs`](Lab2/Core/CoverSearch/Adapters/WikimediaCoverAdapter.cs):
+[`Lab2/Core/CoverSearch/Patterns/Adapter/WikimediaCoverAdapter.cs`](Lab2/Core/CoverSearch/Patterns/Adapter/WikimediaCoverAdapter.cs):
 
 ```csharp
 public sealed class WikimediaCoverAdapter(WikimediaCommonsClient client) : ICoverCatalog
@@ -198,7 +199,7 @@ classDiagram
 
 ### Code where the pattern is visible
 
-[`Lab2/Core/CoverSearch/Decorators/CachingCoverCatalog.cs`](Lab2/Core/CoverSearch/Decorators/CachingCoverCatalog.cs):
+[`Lab2/Core/CoverSearch/Patterns/Decorator/CachingCoverCatalog.cs`](Lab2/Core/CoverSearch/Patterns/Decorator/CachingCoverCatalog.cs):
 
 ```csharp
 public sealed class CachingCoverCatalog(ICoverCatalog inner) : CoverCatalogDecorator(inner)
@@ -276,7 +277,7 @@ classDiagram
 
 ### Code where the pattern is visible
 
-[`Lab2/Core/CoverSearch/Images/CachedCoverImageProxy.cs`](Lab2/Core/CoverSearch/Images/CachedCoverImageProxy.cs), abridged:
+[`Lab2/Core/CoverSearch/Patterns/Proxy/CachedCoverImageProxy.cs`](Lab2/Core/CoverSearch/Patterns/Proxy/CachedCoverImageProxy.cs), abridged:
 
 ```csharp
 public sealed class CachedCoverImageProxy(
