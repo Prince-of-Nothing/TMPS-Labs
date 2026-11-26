@@ -15,11 +15,16 @@ public partial class MainPage : ContentPage
     private readonly ActivityLogObserver _activity = new();
     private readonly DelegateObserver _refreshObserver;
     private bool _liveStats;
+    private bool _gridView;
+    private readonly DataTemplate? _listTemplate;
+    private readonly DataTemplate? _gridTemplate;
 
     public MainPage(AppServices services)
     {
         InitializeComponent();
         _services = services;
+        _listTemplate = ItemsList.ItemTemplate;
+        _gridTemplate = (DataTemplate)Resources["GridCard"];
         _statistics = new StatisticsObserver(() => _services.Editor.Items);
         _refreshObserver = new DelegateObserver(change =>
         {
@@ -71,13 +76,42 @@ public partial class MainPage : ContentPage
         await Navigation.PushAsync(page);
     }
 
+    /// <summary>Shows a one-line notice, such as the result of a library move.</summary>
+    public void ShowNotice(string message) => StatusLabel.Text = message;
+
     private async void OnEditClicked(object sender, EventArgs e)
     {
-        if (FindItem(sender) is not { } item)
+        if (FindItem(sender) is { } item)
         {
-            return;
+            await OpenEditorAsync(item);
         }
+    }
 
+    private async void OnGridCardTapped(object sender, TappedEventArgs e)
+    {
+        if (sender is BindableObject { BindingContext: ItemRow row } &&
+            _services.Editor.Find(row.Id) is { } item)
+        {
+            await OpenEditorAsync(item);
+        }
+    }
+
+    private void OnLayoutClicked(object sender, EventArgs e)
+    {
+        _gridView = !_gridView;
+        ItemsList.ItemsLayout = _gridView
+            ? new GridItemsLayout(2, ItemsLayoutOrientation.Vertical)
+            {
+                HorizontalItemSpacing = 10,
+                VerticalItemSpacing = 10,
+            }
+            : new LinearItemsLayout(ItemsLayoutOrientation.Vertical);
+        ItemsList.ItemTemplate = _gridView ? _gridTemplate : _listTemplate;
+        LayoutButton.Text = _gridView ? "List view" : "Grid view";
+    }
+
+    private async Task OpenEditorAsync(MediaItem item)
+    {
         var page = new EditPage(_services, item);
         page.Saved += draft =>
         {

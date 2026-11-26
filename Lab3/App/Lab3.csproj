@@ -10,7 +10,7 @@
     <Nullable>enable</Nullable>
 
     <ApplicationTitle>Watchlist</ApplicationTitle>
-    <ApplicationId>com.tmps.lab3.watchlist</ApplicationId>
+    <ApplicationId>net.plesu.dinu.shameless.watchlist</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
@@ -20,6 +20,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.110" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#1A1525" />
+    <MauiImage Include="Resources\Images\logo.svg" BaseSize="128,128" />
   </ItemGroup>
 
   <ItemGroup>

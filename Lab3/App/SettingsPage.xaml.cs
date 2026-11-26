@@ -1,5 +1,6 @@
 using Microsoft.Maui.Storage;
 using Watchlist.Core.CoverSearch;
+using Watchlist.Core.Storage;
 
 namespace Lab3;
 
@@ -19,10 +20,15 @@ public partial class SettingsPage : ContentPage
 
         ThemePicker.ItemsSource = new List<string> { "System", "Light", "Dark" };
         ThemePicker.SelectedItem = Preferences.Default.Get("theme", "System");
+        BuildAccentButtons();
 
         ProviderPicker.ItemsSource = ProviderNames;
         ProviderPicker.SelectedIndex = (int)_services.CoverProvider;
-        StorageLabel.Text = _services.RootPath;
+
+        StorageLabel.Text = $"Current: {_services.RootPath}";
+        SharedButton.Text = StorageLocations.SharedDocuments.Length == 0
+            ? "Shared Documents is unavailable"
+            : "Move to shared Documents";
         _loaded = true;
     }
 
@@ -34,13 +40,37 @@ public partial class SettingsPage : ContentPage
         }
 
         Preferences.Default.Set("theme", theme);
-        Application.Current!.UserAppTheme = theme switch
+        Application.Current!.UserAppTheme = App.ThemeFromPreference(theme);
+        StatusLabel.Text = $"Theme mode set to {theme}.";
+    }
+
+    private void BuildAccentButtons()
+    {
+        var current = Preferences.Default.Get(App.AccentPreferenceKey, AccentChoice.Default.Key);
+        AccentRow.Children.Clear();
+        foreach (var choice in AccentChoice.All)
         {
-            "Light" => AppTheme.Light,
-            "Dark" => AppTheme.Dark,
-            _ => AppTheme.Unspecified,
-        };
-        StatusLabel.Text = $"Theme set to {theme}.";
+            var selected = choice.Key == current;
+            var button = new Button
+            {
+                Text = selected ? $"✓ {choice.Name}" : choice.Name,
+                BackgroundColor = choice.Color,
+                TextColor = Colors.White,
+                FontAttributes = selected ? FontAttributes.Bold : FontAttributes.None,
+                Margin = new Thickness(0, 0, 8, 8),
+            };
+            SemanticProperties.SetDescription(button, $"{choice.Name} accent color");
+            button.Clicked += (_, _) => OnAccentClicked(choice);
+            AccentRow.Children.Add(button);
+        }
+    }
+
+    private void OnAccentClicked(AccentChoice choice)
+    {
+        Preferences.Default.Set(App.AccentPreferenceKey, choice.Key);
+        App.ApplyAccent(choice.Key);
+        BuildAccentButtons();
+        StatusLabel.Text = $"Accent set to {choice.Name}.";
     }
 
     private void OnProviderChanged(object sender, EventArgs e)
@@ -55,5 +85,92 @@ public partial class SettingsPage : ContentPage
         StatusLabel.Text = provider == CoverProvider.Auto
             ? "Cover search routes automatically by kind."
             : $"{ProviderNames[ProviderPicker.SelectedIndex]} is now the cover search engine.";
+    }
+
+    private async void OnAppStorageClicked(object sender, EventArgs e) =>
+        await MoveLibraryAsync(StorageLocations.AppStorage, "app storage");
+
+    private async void OnSharedClicked(object sender, EventArgs e)
+    {
+        var root = StorageLocations.SharedDocuments;
+        if (root.Length == 0)
+        {
+            StatusLabel.Text = "Shared Documents is unavailable on this device.";
+            return;
+        }
+
+        if (!await StorageLocations.RequestSharedAccessAsync())
+        {
+            StatusLabel.Text = "Enable “All files access” for Watchlist in Settings, then try again.";
+            return;
+        }
+
+        await MoveLibraryAsync(root, "shared Documents");
+    }
+
+    private async void OnCustomClicked(object sender, EventArgs e)
+    {
+        var path = CustomPathEntry.Text?.Trim() ?? string.Empty;
+        if (!Path.IsPathFullyQualified(path))
+        {
+            StatusLabel.Text = "Enter a full folder path, such as /storage/emulated/0/Notes/Watchlist.";
+            return;
+        }
+
+        if (path.StartsWith("/storage/", StringComparison.Ordinal) &&
+            !await StorageLocations.RequestSharedAccessAsync())
+        {
+            StatusLabel.Text = "Enable “All files access” for Watchlist in Settings, then try again.";
+            return;
+        }
+
+        await MoveLibraryAsync(path, "that folder");
+    }
+
+    /// <summary>
+    /// Copies the vault into <paramref name="target"/> without overwriting anything,
+    /// then reopens the app on the new folder. The old copy is never deleted.
+    /// </summary>
+    private async Task MoveLibraryAsync(string target, string label)
+    {
+        var source = _services.RootPath;
+        if (string.Equals(Path.GetFullPath(source), Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase))
+        {
+            StatusLabel.Text = "The library is already in that folder.";
+            return;
+        }
+
+        if (!StorageLocations.CanUse(target))
+        {
+            StatusLabel.Text = "That folder is not writable. Check the path and the permission.";
+            return;
+        }
+
+        var confirmed = await DisplayAlertAsync(
+            "Move library",
+            $"Copy your library to {label}?\n\n{target}\n\nThe current copy stays where it is.",
+            "Move",
+            "Cancel");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            var copied = VaultMigrator.CopyVault(source, target);
+            var notice = copied.Total == 0
+                ? $"Library now opens from {label}."
+                : $"Copied {copied.Entries} entries and {copied.Covers} covers to {label}.";
+
+            if (Application.Current is App app)
+            {
+                app.SwitchLibrary(target, notice);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusLabel.Text = $"Move failed: {ex.Message}";
+        }
     }
 }
