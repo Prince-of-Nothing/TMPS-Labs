@@ -1,3 +1,4 @@
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Storage;
 using Watchlist.Behavioral.Commands;
@@ -22,22 +23,26 @@ public partial class MainPage : ContentPage
         _statistics = new StatisticsObserver(() => _services.Editor.Items);
         _refreshObserver = new DelegateObserver(change =>
         {
-            StatusLabel.Text = change.Message;
-            RefreshRows();
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                StatusLabel.Text = change.Message;
+                RefreshRows();
+            });
         });
 
         _services.Events.Subscribe(_refreshObserver);
         _services.Events.Subscribe(_activity);
-        _services.Commands.HistoryChanged += (_, _) => UpdateHistory();
+        _services.Commands.HistoryChanged += (_, _) =>
+            MainThread.BeginInvokeOnMainThread(UpdateHistory);
         _statistics.Updated += (_, _) =>
         {
             if (_liveStats)
             {
-                UpdateStatistics();
+                MainThread.BeginInvokeOnMainThread(UpdateStatistics);
             }
         };
 
-        StatusFilter.ItemsSource = new List<string> { "All", "Planned", "Consumed", "Rated" };
+        StatusFilter.ItemsSource = new List<string> { "All", "Planned", "Completed", "Consumed", "Rated" };
         StatusFilter.SelectedIndex = 0;
         SortPicker.ItemsSource = new List<string> { "Title", "Rating", "Recently updated", "Kind" };
         SortPicker.SelectedIndex = 0;
@@ -86,7 +91,8 @@ public partial class MainPage : ContentPage
                     draft.Notes,
                     draft.Progress,
                     draft.CoverPath,
-                    draft.CoverSourceUrl);
+                    draft.CoverSourceUrl,
+                    draft.CustomKind);
                 _services.Commands.Execute(new EditMediaCommand(_services.Editor, item, edit));
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
@@ -235,6 +241,9 @@ public partial class MainPage : ContentPage
         RefreshRows();
     }
 
+    private async void OnSettingsClicked(object sender, EventArgs e) =>
+        await Navigation.PushAsync(new SettingsPage(_services));
+
     private async void OnActivityClicked(object sender, EventArgs e)
     {
         var entries = _activity.Entries.TakeLast(12).ToArray();
@@ -261,6 +270,8 @@ public partial class MainPage : ContentPage
 
     private void OnFilterChanged(object sender, EventArgs e) => RefreshRows();
 
+    private void OnSearchChanged(object sender, TextChangedEventArgs e) => RefreshRows();
+
     private async void OnRefreshing(object sender, EventArgs e)
     {
         OnReloadClicked(sender, e);
@@ -272,11 +283,24 @@ public partial class MainPage : ContentPage
     {
         var filter = StatusFilter.SelectedItem as string ?? "All";
         var sort = SortPicker.SelectedItem as string ?? "Title";
+        var search = SearchEntry.Text?.Trim();
         IEnumerable<MediaItem> query = _services.Editor.Items;
 
-        if (filter is "Planned" or "Consumed" or "Rated")
+        if (filter == "Completed")
+        {
+            query = query.Where(item => item.Status is MediaStatus.Consumed or MediaStatus.Rated);
+        }
+        else if (filter is "Planned" or "Consumed" or "Rated")
         {
             query = query.Where(item => item.Status.ToString() == filter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(item =>
+                item.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                item.Category.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                item.Tags.Any(tag => tag.Contains(search, StringComparison.OrdinalIgnoreCase)));
         }
 
         query = sort switch
@@ -296,7 +320,7 @@ public partial class MainPage : ContentPage
     {
         Id = item.Id,
         Title = item.Title,
-        Subtitle = $"{item.Kind} · {item.Category}" +
+        Subtitle = $"{item.KindLabel} · {item.Category}" +
                    (item.Tags.Count == 0 ? "" : $" · {string.Join(", ", item.Tags)}"),
         StatusText = item.Status switch
         {
@@ -352,6 +376,7 @@ public partial class MainPage : ContentPage
         new MediaItemBuilder()
             .WithTitle(draft.Title)
             .WithKind(draft.Kind)
+            .WithCustomKind(draft.CustomKind)
             .WithCategory(draft.Category)
             .WithTags(SplitTags(draft.Tags))
             .WithNotes(draft.Notes)

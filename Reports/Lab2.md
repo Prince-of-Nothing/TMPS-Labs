@@ -567,12 +567,13 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Result from the verified run:
 
 ```text
-Passed!  - Failed:     0, Passed:    51, Skipped:     0, Total:    51, Duration: 142 ms
+Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 115 ms
 ```
 
-The 51 tests include the Markdown vault (codec, unknown keys, malformed files,
-index, repository, migration), the three cover patterns, the assembled
-factory pipeline and the Lab 3 behavioral tests in the same test project. Test
+The 55 tests include the Markdown vault (codec, unknown keys, custom kinds,
+malformed files, index, repository, migration), the three cover patterns, the
+assembled factory pipeline and the Lab 3 behavioral and import tests in the
+same test project. Test
 names are listed in sections 3–6 for the structural patterns; the project
 compiles with:
 

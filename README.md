@@ -26,7 +26,7 @@ layer for Labs 2 and 3. It contains:
 
 Lab 3 references that project and adds the behavioral layer in
 `Lab3/Behavioral/Watchlist.Behavioral` (Command, Observer, State, Strategy,
-AniList/MAL import and CSV/Markdown export).
+AniList/MAL/CSV import and CSV/Markdown export).
 
 ## Releases
 

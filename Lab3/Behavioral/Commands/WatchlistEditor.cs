@@ -23,15 +23,17 @@ public sealed class WatchlistEditor(WatchlistRepository repository, WatchlistEve
         events.Publish(WatchlistChangeKind.Added, item.Id, $"Added “{item.Title}”.");
     }
 
-    public void AddMany(IEnumerable<MediaItem> items)
+    public void AddMany(IEnumerable<MediaItem> items, IProgress<ImportProgress>? progress = null)
     {
+        var all = items.ToArray();
         var added = new List<MediaItem>();
         try
         {
-            foreach (var item in items)
+            foreach (var item in all)
             {
                 repository.Add(item);
                 added.Add(item);
+                progress?.Report(new ImportProgress(added.Count, all.Length, item.Title));
             }
         }
         catch

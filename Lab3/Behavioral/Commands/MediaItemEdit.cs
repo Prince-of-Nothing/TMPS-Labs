@@ -10,7 +10,8 @@ public sealed record MediaItemEdit(
     string Notes,
     string? Progress,
     string? CoverPath = null,
-    string? CoverSourceUrl = null)
+    string? CoverSourceUrl = null,
+    string? CustomKind = null)
 {
     public static MediaItemEdit From(MediaItem item) =>
         new(
@@ -21,11 +22,12 @@ public sealed record MediaItemEdit(
             item.Notes,
             item.Progress,
             item.CoverPath,
-            item.CoverSourceUrl);
+            item.CoverSourceUrl,
+            item.CustomKind);
 
     public void ApplyTo(MediaItem item)
     {
-        item.Edit(Title, Kind, Category, Tags, Notes, Progress);
+        item.Edit(Title, Kind, Category, Tags, Notes, Progress, CustomKind);
         item.SetCover(CoverPath, CoverSourceUrl);
     }
 }

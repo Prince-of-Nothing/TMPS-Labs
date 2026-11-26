@@ -55,7 +55,8 @@ public partial class MainPage : ContentPage
                 draft.Category,
                 SplitTags(draft.Tags),
                 draft.Notes,
-                draft.Progress);
+                draft.Progress,
+                draft.CustomKind);
             _services.Repository.Update(item);
             StatusLabel.Text = $"Updated “{item.Title}”.";
         });
@@ -190,7 +191,7 @@ public partial class MainPage : ContentPage
     {
         Id = item.Id,
         Title = item.Title,
-        Subtitle = $"{item.Kind} · {item.Category}" +
+        Subtitle = $"{item.KindLabel} · {item.Category}" +
                    (item.Tags.Count == 0 ? "" : $" · {string.Join(", ", item.Tags)}"),
         StatusText = item.Status switch
         {

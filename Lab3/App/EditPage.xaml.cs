@@ -15,7 +15,10 @@ public partial class EditPage : ContentPage
         _services = services;
         _item = item;
 
-        KindPicker.ItemsSource = Enum.GetValues<MediaKind>().Select(value => value.ToString()).ToList();
+        KindPicker.ItemsSource = Enum.GetValues<MediaKind>()
+            .Where(value => value != MediaKind.Custom)
+            .Select(value => value.ToString())
+            .ToList();
 
         if (item is null)
         {
@@ -28,7 +31,10 @@ public partial class EditPage : ContentPage
 
         HeaderLabel.Text = "Edit entry";
         TitleEntry.Text = item.Title;
-        KindPicker.SelectedItem = item.Kind.ToString();
+        KindPicker.SelectedItem = item.Kind == MediaKind.Custom
+            ? MediaKind.Other.ToString()
+            : item.Kind.ToString();
+        CustomKindEntry.Text = item.CustomKind ?? "";
         CategoryEntry.Text = item.Category;
         TagsEntry.Text = string.Join(", ", item.Tags);
         ProgressEntry.Text = item.Progress ?? "";
@@ -39,6 +45,28 @@ public partial class EditPage : ContentPage
     }
 
     public event Action<EntryDraft>? Saved;
+
+    private async void OnCategoryPickClicked(object sender, EventArgs e)
+    {
+        var categories = _services.Repository.Items
+            .Select(item => item.Category)
+            .Append(CategoryEntry.Text?.Trim() ?? "")
+            .Where(category => category.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(category => category, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (categories.Length == 0)
+        {
+            StatusLabel.Text = "No categories yet. Type one to create it.";
+            return;
+        }
+
+        var choice = await DisplayActionSheetAsync("Choose a category", "Cancel", null, categories);
+        if (choice is not ("Cancel" or null))
+        {
+            CategoryEntry.Text = choice;
+        }
+    }
 
     private async void OnChooseCoverClicked(object sender, EventArgs e)
     {
@@ -66,9 +94,12 @@ public partial class EditPage : ContentPage
             return;
         }
 
-        var kind = Enum.TryParse<MediaKind>(KindPicker.SelectedItem as string, out var parsed)
-            ? parsed
-            : MediaKind.Other;
+        var customKind = CustomKindEntry.Text?.Trim();
+        var kind = !string.IsNullOrWhiteSpace(customKind)
+            ? MediaKind.Custom
+            : Enum.TryParse<MediaKind>(KindPicker.SelectedItem as string, out var parsed)
+                ? parsed
+                : MediaKind.Other;
         var draft = new EntryDraft(
             title,
             kind,
@@ -77,7 +108,8 @@ public partial class EditPage : ContentPage
             NotesEditor.Text?.Trim() ?? "",
             string.IsNullOrWhiteSpace(ProgressEntry.Text) ? null : ProgressEntry.Text.Trim(),
             _coverPath,
-            _coverSource);
+            _coverSource,
+            string.IsNullOrWhiteSpace(customKind) ? null : customKind);
 
         Saved?.Invoke(draft);
         await Navigation.PopAsync();

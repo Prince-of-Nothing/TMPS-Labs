@@ -11,12 +11,16 @@ namespace Lab3;
 /// <summary>Composition root for the MAUI client.</summary>
 public sealed class AppServices
 {
+    private readonly string _coversPath;
+
     private AppServices(
         WatchlistRepository repository,
         WatchlistEditor editor,
         WatchlistEvents events,
         CommandInvoker commands,
         CoverService covers,
+        string coversPath,
+        CoverProvider coverProvider,
         ExportService exports,
         ImportService import,
         IReadOnlyList<IWatchlistImporter> importers,
@@ -27,6 +31,8 @@ public sealed class AppServices
         Events = events;
         Commands = commands;
         Covers = covers;
+        _coversPath = coversPath;
+        CoverProvider = coverProvider;
         Exports = exports;
         Import = import;
         Importers = importers;
@@ -37,7 +43,8 @@ public sealed class AppServices
     public WatchlistEditor Editor { get; }
     public WatchlistEvents Events { get; }
     public CommandInvoker Commands { get; }
-    public CoverService Covers { get; }
+    public CoverService Covers { get; private set; }
+    public CoverProvider CoverProvider { get; private set; }
     public ExportService Exports { get; }
     public ImportService Import { get; }
     public IReadOnlyList<IWatchlistImporter> Importers { get; }
@@ -65,13 +72,19 @@ public sealed class AppServices
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("TMPS-Watchlist-Lab3/1.0");
 
+        var providerName = Preferences.Default.Get("cover_provider", CoverProvider.Auto.ToString());
+        var coverProvider = Enum.TryParse<CoverProvider>(providerName, ignoreCase: true, out var parsedProvider)
+            ? parsedProvider
+            : CoverProvider.Auto;
+
         // Lab 2's structural pipeline, created inside Core rather than here.
-        var covers = CoverServiceFactory.Create(http, store.CoversPath);
+        var covers = CoverServiceFactory.Create(http, store.CoversPath, coverProvider);
 
         var importers = new IWatchlistImporter[]
         {
             new AniListImporter(http),
             new MalXmlImporter(),
+            new CsvWatchlistImporter(),
         };
 
         return new AppServices(
@@ -80,9 +93,18 @@ public sealed class AppServices
             events,
             commands,
             covers,
+            store.CoversPath,
+            coverProvider,
             new ExportService(new CsvWatchlistExporter()),
             new ImportService(),
             importers,
             http);
+    }
+
+    public void SetCoverProvider(CoverProvider provider)
+    {
+        CoverProvider = provider;
+        Covers = CoverServiceFactory.Create(Http, _coversPath, provider);
+        Preferences.Default.Set("cover_provider", provider.ToString());
     }
 }

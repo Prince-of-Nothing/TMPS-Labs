@@ -53,7 +53,10 @@ Lab 3 is the final watchlist application. It keeps the same media domain as
 Lab 2 and reads/writes the same Markdown vault, but adds the interactive
 behavior a real user expects: undo/redo, live counters, a guarded
 planned → consumed → rated lifecycle, runtime filtering and export format
-selection, a visual cover picker, and import from AniList or a MAL XML export.
+selection, a visual cover picker, import from AniList, a MAL XML export or a
+generic CSV, and settings for theme and cover search provider. Search and a
+Completed filter narrow the list; entries can use a user-created kind and an
+existing category chosen from a picker.
 
 The library remains portable. On first launch the user chooses a location:
 
@@ -91,6 +94,9 @@ Reused from Lab 2:
 - `MarkdownWatchlistStore`, `MarkdownEntryCodec`, `WatchlistRepository`;
 - `VaultMigrator` for copying the existing vault into a new location;
 - `MediaItem`, `MediaItemBuilder`;
+- the custom-kind extension (`MediaKind.Custom` + `CustomKind`/`KindLabel`)
+  stored as `customKind:` frontmatter, so a Lab 3 entry keeps its own label
+  when read by Lab 2;
 - the structural cover pipeline: `ICoverCatalog`, provider adapters,
   filtering/caching decorators, `CachedCoverImageProxy`, assembled by
   `CoverServiceFactory`.
@@ -673,9 +679,20 @@ require a registered client id and secrets; the XML avoids both. It parses
 `<anime>` and `<manga>` rows, score, watched/read progress, type, status, image
 and MAL id. The XML reader prohibits DTDs and resolves no external entities.
 
+### CSV
+
+[`Lab3/Behavioral/Import/CsvWatchlistImporter.cs`](../Lab3/Behavioral/Import/CsvWatchlistImporter.cs)
+is the “any other service” path: a CSV with at least a `Title` column. Optional
+`Kind`, `Category`, `Status`, `Rating`, `Progress` and `Tags` columns are
+mapped case-insensitively; unknown headers are ignored. The app reads the file
+through Android's document picker, so no extra permission is needed.
+
 Duplicate detection in `ImportService` normalizes title punctuation,
 diacritics and case, then compares title + kind. The preview reports new and
-duplicate rows; import is one `ImportMediaCommand`.
+duplicate rows; import is one `ImportMediaCommand`. While it runs,
+`ImportProgress` reports `processed/total` and the current title to the UI
+progress bar; the whole import remains a single undoable command, and a
+failure rolls back every entry added in that run.
 
 ### Export
 
@@ -720,15 +737,22 @@ fully compatible with Lab 2.
 - a stats strip (total, planned, consumed, rated, average);
 - Add / Import / Export / Undo / Redo / Reload / Activity;
 - Live stats switch;
-- status filter and sort picker;
+- search by title, category or tag;
+- status filter (All / Planned / Completed / Consumed / Rated) and sort picker;
 - cards with local/remote cover, title, kind/category/tags, status, progress,
   notes preview, and status-aware actions.
 
-`EditPage` edits metadata and opens `CoverPickerPage` (search, thumbnails,
-provider label, local download). `ImportPage` chooses AniList or MAL XML,
-previews new/duplicate counts, then imports. Covers are resolved from the local
-vault first and fall back to the remote URL, so an entry remains visible even
-if the cover file is missing.
+`EditPage` edits metadata, accepts a free-text custom kind (stored as
+`kind: custom` + `customKind: …`), and offers an existing-category picker next
+to the category field. `CoverPickerPage` searches with thumbnails, provider
+label and local download. `ImportPage` chooses AniList, MAL XML or CSV,
+previews new/duplicate counts, then imports with a progress bar.
+`SettingsPage` (toolbar item) switches the theme between System/Light/Dark and
+selects the cover search engine (Auto, Wikimedia, Open Library or TVmaze); both
+choices are stored in `Preferences` and applied without a restart. All pages
+use `AppThemeBinding` colours, so dark mode covers the whole app. Covers are
+resolved from the local vault first and fall back to the remote URL, so an
+entry remains visible even if the cover file is missing.
 
 The verified emulator run (Medium_Phone API 37) chose shared Documents, created
 the vault, restarted into the saved path, then loaded an entry written directly
@@ -747,11 +771,11 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Verified result:
 
 ```text
-Passed!  - Failed:     0, Passed:    51, Skipped:     0, Total:    51, Duration: 142 ms
+Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 115 ms
 ```
 
-The Lab 3 tests cover all four claimed patterns, the import mapping and the
-vault migration:
+The Lab 3 tests cover all four claimed patterns, the import mapping, the CSV
+reader and the vault migration:
 
 ```text
 Watchlist.Tests.CommandTests.*                 9 tests
@@ -759,8 +783,13 @@ Watchlist.Tests.ObserverTests.*                5 tests
 Watchlist.Tests.StateTests.*                   4 tests
 Watchlist.Tests.ExportTests.*                   3 tests
 Watchlist.Tests.ImportTests.*                  7 tests
+Watchlist.Tests.CsvImportTests.*                3 tests
 Watchlist.Tests.VaultMigratorTests.*            2 tests
 ```
+
+The shared project also adds a custom-kind round trip in `MarkdownVaultTests`
+and keeps the Lab 2 structural tests green (12 cover-pattern tests, 10 vault
+tests).
 
 Run `dotnet test --list-tests` to see the exact names; the pattern tables in
 sections 4–7 list the names and what each one proves.
@@ -790,12 +819,14 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  14.5 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk
 ```
 
-A Release publish with the same command as CI (`-c Release`,
-`-p:AndroidKeyStore=false`) also completed with AOT compilation and produced a
-27.6 MB APK, with no XamlC binding warnings.
+The debug APK used for the emulator run is built with
+`-p:EmbedAssembliesIntoApk=true` so it installs without the IDE's fast
+deployment step. A Release publish with the same command as CI (`-c Release`,
+`-p:AndroidKeyStore=false`) also completed with AOT compilation, with no XamlC
+binding warnings.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
 tooling (`XA0030`). The repository's `android-labs.yml` workflow installs the

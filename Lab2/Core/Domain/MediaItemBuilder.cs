@@ -7,6 +7,7 @@ public sealed class MediaItemBuilder
 {
     private string _title = string.Empty;
     private MediaKind _kind = MediaKind.Other;
+    private string? _customKind;
     private string _category = "Uncategorized";
     private List<string> _tags = [];
     private MediaStatus _status = MediaStatus.Planned;
@@ -29,6 +30,12 @@ public sealed class MediaItemBuilder
     public MediaItemBuilder WithKind(MediaKind kind)
     {
         _kind = kind;
+        return this;
+    }
+
+    public MediaItemBuilder WithCustomKind(string? customKind)
+    {
+        _customKind = customKind;
         return this;
     }
 
@@ -100,5 +107,6 @@ public sealed class MediaItemBuilder
             _sourceStatus,
             _notes,
             _createdAt ?? DateTimeOffset.UtcNow,
-            _updatedAt ?? _createdAt ?? DateTimeOffset.UtcNow);
+            _updatedAt ?? _createdAt ?? DateTimeOffset.UtcNow,
+            _customKind);
 }

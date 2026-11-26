@@ -28,7 +28,8 @@ public sealed record EntryDraft(
     string Category,
     string Tags,
     string Notes,
-    string? Progress);
+    string? Progress,
+    string? CustomKind = null);
 
 /// <summary>One search result in the cover picker.</summary>
 public sealed record CoverRow(CoverCandidate Candidate, string Title, string Provider, ImageSource? Thumbnail);

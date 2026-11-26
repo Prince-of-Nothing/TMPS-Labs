@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab3.SettingsPage"
+             Title="Settings"
+             BackgroundColor="{AppThemeBinding Light=#F8F6F3, Dark=#121016}">
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="Settings" FontSize="25" FontAttributes="Bold" />
+
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Theme" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Picker x:Name="ThemePicker" SelectedIndexChanged="OnThemeChanged" />
+                    <Label Text="Appearance follows the device unless you override it."
+                           FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Cover search engine" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Picker x:Name="ProviderPicker" SelectedIndexChanged="OnProviderChanged" />
+                    <Label Text="Auto routes by kind: Open Library for books, TVmaze for shows, Wikimedia for films and games."
+                           FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Library" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Label x:Name="StorageLabel" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" LineBreakMode="WordWrap" />
+                    <Label Text="Kinds and categories are edited from an entry. Type a custom kind in the kind field to create one."
+                           FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="{AppThemeBinding Light=#A0899C, Dark=#C9BDCF}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -9,6 +9,12 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        UserAppTheme = Preferences.Default.Get("theme", "System") switch
+        {
+            "Light" => AppTheme.Light,
+            "Dark" => AppTheme.Dark,
+            _ => AppTheme.Unspecified,
+        };
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

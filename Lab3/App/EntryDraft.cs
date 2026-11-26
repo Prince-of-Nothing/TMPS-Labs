@@ -10,4 +10,5 @@ public sealed record EntryDraft(
     string Notes,
     string? Progress,
     string? CoverPath,
-    string? CoverSourceUrl);
+    string? CoverSourceUrl,
+    string? CustomKind = null);

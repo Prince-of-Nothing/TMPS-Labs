@@ -4,10 +4,17 @@ namespace Lab2;
 
 public partial class EditPage : ContentPage
 {
+    // Lab 2 has no custom-kind input; keep whatever the shared vault already stored.
+    private readonly string? _customKind;
+
     public EditPage(MediaItem? item)
     {
         InitializeComponent();
-        KindPicker.ItemsSource = Enum.GetValues<MediaKind>().Select(value => value.ToString()).ToList();
+        _customKind = item?.CustomKind;
+        KindPicker.ItemsSource = Enum.GetValues<MediaKind>()
+            .Where(value => value != MediaKind.Custom)
+            .Select(value => value.ToString())
+            .ToList();
 
         if (item is null)
         {
@@ -18,7 +25,9 @@ public partial class EditPage : ContentPage
 
         HeaderLabel.Text = "Edit entry";
         TitleEntry.Text = item.Title;
-        KindPicker.SelectedItem = item.Kind.ToString();
+        KindPicker.SelectedItem = item.Kind == MediaKind.Custom
+            ? MediaKind.Other.ToString()
+            : item.Kind.ToString();
         CategoryEntry.Text = item.Category;
         TagsEntry.Text = string.Join(", ", item.Tags);
         ProgressEntry.Text = item.Progress ?? "";
@@ -45,7 +54,8 @@ public partial class EditPage : ContentPage
             CategoryEntry.Text?.Trim() ?? "",
             TagsEntry.Text?.Trim() ?? "",
             NotesEditor.Text?.Trim() ?? "",
-            string.IsNullOrWhiteSpace(ProgressEntry.Text) ? null : ProgressEntry.Text.Trim()));
+            string.IsNullOrWhiteSpace(ProgressEntry.Text) ? null : ProgressEntry.Text.Trim(),
+            _customKind));
         await Navigation.PopAsync();
     }
 
