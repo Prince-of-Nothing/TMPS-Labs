@@ -1,384 +1,234 @@
 # Lab 3 Report — Behavioral Design Patterns
 
-**Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
-**Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 10 MAUI (Android)  
-**Year:** 2026  
-**Instructor:** Istrati Daniel
-
----
+**Course:** TMPS · **Author:** Pleșu Dinu (FAF241) · **Technology:** C# / .NET 10, MAUI Android client
+**Package:** `net.plesu.dinu.shameless.watchlist`
+**Repository:** `Lab3/Behavioral` (pattern library), `Lab3/App` (Android client), `Lab2/Core` (shared from Lab 2), `Tests/Watchlist.Tests`
 
 ## Objectives
 
-1. Study and understand the Behavioral Design Patterns.
-2. As a continuation of the previous laboratory work, think about what
-   communication between software entities might be involved in the system.
-3. Create a new project, or add some additional functionalities, using
-   behavioral design patterns.
+- Explain the intent of each behavioral pattern and how it distributes responsibilities and communication between objects.
+- Recognise where a behavioral pattern fits naturally in a codebase, and where it would be forced.
+- Implement the patterns so behavior can be changed or extended without modifying existing classes.
+- Show that objects communicate through abstractions rather than hard-coded dependencies.
+- Defend design choices and adapt the code to a new requirement during the defence.
 
-## Main tasks
+## Task
 
-By extending the project, implement at least 1 behavioral design pattern:
+Implement **at least three** behavioral patterns in one project, and learn the rest that were not implemented. Interpreter is good to know but does not count as one of the three.
 
-- the implemented pattern should help perform the tasks the system offers;
-- the behavioral patterns can be integrated into the functionalities alongside
-  the structural ones;
-- there should be only one client for the whole system.
+Implemented here: **Command** (with undo and redo), **Observer**, **State**, and **Strategy** (a fourth one, used for export). Not implemented: Chain of Responsibility, Interpreter, Iterator, Mediator, Memento, Template Method, Visitor. Their intent and where they would fit are in §11.
 
 ## Theory
 
-Behavioral patterns describe how objects communicate and divide
-responsibility: who asks for work, who does it, and who hears about the
-result. They make that communication more flexible by replacing hard-wired
-calls and conditionals with objects. The common ones are Chain of
-Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer,
-State, Strategy, Template Method and Visitor.
+Behavioral patterns describe how objects share responsibilities and communicate.
 
-This lab uses four of them:
-
-- **Command** turns a request into an object, so it can be queued, logged and
-  undone.
-- **Observer** lets one subject notify any number of subscribers about a
-  change without knowing their concrete types.
-- **State** moves state-dependent behavior into one class per state, so the
-  object changes its behavior when its state changes.
-- **Strategy** puts interchangeable algorithms behind one interface and lets
-  the client pick one at runtime.
-
----
+- **Command** turns a request into an object, so it can be queued, logged, executed again or undone.
+- **Observer** lets dependent objects be notified automatically when a subject changes, without the subject knowing their concrete types.
+- **State** changes an object's behavior when its internal state changes. Each state is a class, and transitions live in those classes.
+- **Strategy** defines a family of interchangeable algorithms behind one interface and lets the client pick one at run time.
 
 ## 1. Domain description
 
-Lab 3 is the final watchlist application. It keeps the same media domain as
-Lab 2 and reads/writes the same Markdown vault, but adds the interactive
-behavior a real user expects: undo/redo, live counters, a guarded
-planned → consumed → rated lifecycle, runtime filtering and export format
-selection, a visual cover picker, import from AniList, a MAL XML export or a
-generic CSV, and settings for theme and cover search provider. Search and a
-Completed filter narrow the list; entries can use a user-created kind and an
-existing category chosen from a picker.
-
-The library remains portable. On first launch the user chooses a location:
-
-```text
-/storage/emulated/0/Documents/TMPS-Watchlist/   shared, visible in Files
-  index.md
-  entries/0001-the-matrix.md
-  covers/0001.jpg
-```
-
-The no-permission fallback is `FileSystem.AppDataDirectory/library`. The shared
-folder needs Android's “All files access” permission; it is the option that
-makes the Markdown library readable in a normal file manager. Existing entries
-are copied from app storage into the chosen folder without overwriting entries
-that are already there.
-
-The Android client is thin: all behavior lives in
-`Lab3/Behavioral` (`net10.0`) and can be tested without an emulator. The MAUI
-project references both that library and Lab 2's `Watchlist.Core`.
+The application is a personal **watchlist** of films, series, anime, manga, books and games. Each entry has a title, kind, category, tags, status (Planned, Consumed, Rated), an optional rating (1–10), notes, and a cover. The user adds, edits, consumes, rates, reopens, deletes, imports, exports and undoes changes. Entries are stored as Markdown in a local vault, the same vault format as Lab 2.
 
 ## 2. Build on Lab 2
 
-Lab 3 literally references the Lab 2 core:
+The sheet asks to reuse at least one creational or structural pattern from an earlier lab. This project reuses the **Lab 2** Core:
 
-```text
-Lab3/Behavioral/Watchlist.Behavioral.csproj
-  -> ..\..\Lab2\Core\Watchlist.Core.csproj
-Lab3/App/Lab3.csproj
-  -> ..\Behavioral\Watchlist.Behavioral.csproj
-  -> ..\..\Lab2\Core\Watchlist.Core.csproj
-```
+- `WatchlistRepository` and `MarkdownWatchlistStore` (the vault) are the receiver's storage. `WatchlistEditor` calls them and never touches files directly.
+- `MediaItemBuilder` (Builder from Lab 1) creates entries for `AddMediaCommand` and for imports.
+- `CoverService` (Adapter, Decorator and Proxy from Lab 2) provides the cover for `SetCoverCommand`.
 
-Reused from Lab 2:
-
-- `MarkdownWatchlistStore`, `MarkdownEntryCodec`, `WatchlistRepository`;
-- `VaultMigrator` for copying the existing vault into a new location;
-- `MediaItem`, `MediaItemBuilder`;
-- the custom-kind extension (`MediaKind.Custom` + `CustomKind`/`KindLabel`)
-  stored as `customKind:` frontmatter, so a Lab 3 entry keeps its own label
-  when read by Lab 2;
-- the structural cover pipeline: `ICoverCatalog`, provider adapters,
-  filtering/caching decorators, `CachedCoverImageProxy`, assembled by
-  `CoverServiceFactory`.
-
-`AppServices` gets its `CoverService` from the same `CoverServiceFactory.Create`
-call the Lab 2 app uses, so the cover picker in Lab 3 uses exactly the same
-Adapter + Decorator + Proxy path without repeating its wiring. Imported
-AniList/MAL covers can be displayed remotely or saved locally through the same
-proxy. The behavioral patterns sit on top of that path: choosing a cover is a
-`SetCoverCommand` (undoable), and the save publishes an Observer event that
-refreshes the card.
+The behavioral layer adds to Lab 2 and does not change its classes.
 
 ## 3. Project structure
 
 ```text
 Lab3/
-├── Behavioral/                         Watchlist.Behavioral
-│   ├── Commands/
-│   │   ├── IWatchlistCommand.cs
-│   │   ├── CommandInvoker.cs           undo/redo stacks
-│   │   ├── WatchlistEditor.cs          receiver
-│   │   ├── AddMediaCommand.cs
-│   │   ├── EditMediaCommand.cs
-│   │   ├── DeleteMediaCommand.cs
-│   │   ├── LifecycleCommand.cs         previous-state snapshot
-│   │   ├── ConsumeMediaCommand.cs
-│   │   ├── RateMediaCommand.cs
-│   │   ├── ReopenMediaCommand.cs
-│   │   ├── SetCoverCommand.cs
-│   │   └── ImportMediaCommand.cs
-│   ├── Observers/
-│   │   ├── WatchlistEvents.cs          subject
-│   │   ├── IWatchlistObserver.cs
-│   │   ├── StatisticsObserver.cs
-│   │   ├── ActivityLogObserver.cs
-│   │   └── DelegateObserver.cs
-│   ├── States/
-│   │   ├── MediaLifecycle.cs           context
-│   │   ├── IMediaState.cs
-│   │   ├── PlannedState.cs
-│   │   ├── ConsumedState.cs
-│   │   └── RatedState.cs
-│   ├── Export/
-│   │   ├── IWatchlistExporter.cs       strategy
-│   │   ├── CsvWatchlistExporter.cs
-│   │   ├── MarkdownWatchlistExporter.cs
-│   │   └── ExportService.cs            context
-│   └── Import/
-│       ├── IWatchlistImporter.cs
-│       ├── AniListImporter.cs
-│       ├── MalXmlImporter.cs
-│       └── ImportService.cs
-└── App/                                .NET MAUI Android client
-    ├── MainPage.xaml(.cs)              cards, stats, toolbar, filters
-    ├── EditPage.xaml(.cs)              metadata + cover entry point
-    ├── CoverPickerPage.xaml(.cs)       provider search + download
-    ├── ImportPage.xaml(.cs)            AniList username / MAL file preview
-    ├── StorageSetupPage.xaml(.cs)      first-run location + permission
-    ├── StorageLocations.cs             shared/app paths + permission flow
-    └── AppServices.cs                  composition root
+├── Behavioral/                       pattern library, no UI code
+│   ├── Commands/                     Command: IWatchlistCommand, CommandInvoker, concrete commands, WatchlistEditor (receiver)
+│   ├── Observers/                    Observer: IWatchlistObserver, WatchlistEvents (subject), observers
+│   ├── States/                       State: MediaLifecycle (context), IMediaState, Planned/Consumed/RatedState
+│   ├── Export/                       Strategy: ExportService (context), IWatchlistExporter, CSV and Markdown
+│   └── Import/                       AniList, MAL XML and CSV importers, ImportService
+├── App/                              .NET MAUI Android client
+│   ├── AppServices.cs                builds the graph and subscribes the observers
+│   ├── MainPage, EditPage, ImportPage, CoverPickerPage, SettingsPage, ActivityPage, StorageSetupPage
+Tests/Watchlist.Tests/                CommandTests, ObserverTests, StateTests, ExportTests, ImportTests
 ```
 
 ## 4. Command
 
-The Mermaid diagrams follow the Refactoring Guru structure: the role is the
-stereotype in the box, and the box title is the real project class.
-
 ### Intent and the real problem
 
-Every mutation should be undoable, and the UI should not own the business
-logic. The command objects carry the request and its inverse; `WatchlistEditor`
-is the receiver that talks to the repository; `CommandInvoker` keeps the two
-stacks.
+The user's actions (add, edit, consume, rate, reopen, delete, import, set a cover) must be undoable and redoable in the same order they were done. If each screen called the repository directly, undo would need a special case per action. A **command** object describes one action, knows how to run it and how to reverse it, and an invoker keeps the history.
 
-Commands: add, edit, delete, consume, rate, reopen, set cover and import. Undo
-of a lifecycle command restores the previous status and rating instead of
-guessing a transition. Import is one command, so a 200-entry import is one
-undo.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class MainPage {
-  <<Client>>
-}
-class CommandInvoker {
-  <<Invoker>>
-  -Stack~IWatchlistCommand~ undo
-  -Stack~IWatchlistCommand~ redo
-  +Execute(command)
-  +Undo()
-  +Redo()
-  +bool CanUndo
-  +bool CanRedo
-}
-class IWatchlistCommand {
-  <<Command>>
-  +string Description
-  +Execute()
-  +Undo()
-}
-class WatchlistEditor {
-  <<Receiver>>
-  +Add(item)
-  +AddMany(items)
-  +Update(item, message)
-  +Delete(item)
-  +Restore(item)
-  +Reload()
-}
-class AddMediaCommand {
-  <<ConcreteCommand>>
-}
-class EditMediaCommand {
-  <<ConcreteCommand>>
-}
-class DeleteMediaCommand {
-  <<ConcreteCommand>>
-}
-class SetCoverCommand {
-  <<ConcreteCommand>>
-}
-class ImportMediaCommand {
-  <<ConcreteCommand>>
-}
-class LifecycleCommand {
-  <<AbstractCommand>>
-  #MediaItem Item
-  #WatchlistEditor Editor
-  +Undo()
-}
-class ConsumeMediaCommand {
-  <<ConcreteCommand>>
-}
-class RateMediaCommand {
-  <<ConcreteCommand>>
-}
-class ReopenMediaCommand {
-  <<ConcreteCommand>>
-}
-MainPage --> CommandInvoker : executes
-CommandInvoker o--> IWatchlistCommand : undo/redo history
-IWatchlistCommand <|.. AddMediaCommand : implements
-IWatchlistCommand <|.. EditMediaCommand : implements
-IWatchlistCommand <|.. DeleteMediaCommand : implements
-IWatchlistCommand <|.. SetCoverCommand : implements
-IWatchlistCommand <|.. ImportMediaCommand : implements
-IWatchlistCommand <|.. LifecycleCommand : implements
-LifecycleCommand <|-- ConsumeMediaCommand : extends
-LifecycleCommand <|-- RateMediaCommand : extends
-LifecycleCommand <|-- ReopenMediaCommand : extends
-AddMediaCommand --> WatchlistEditor : receiver
-EditMediaCommand --> WatchlistEditor : receiver
-DeleteMediaCommand --> WatchlistEditor : receiver
-LifecycleCommand --> WatchlistEditor : receiver
-ImportMediaCommand --> WatchlistEditor : receiver
+    direction TB
+    class IWatchlistCommand {
+        <<interface>>
+        +Description string
+        +Execute()
+        +Undo()
+    }
+    class LifecycleCommand {
+        <<abstract>>
+        -_editor WatchlistEditor
+        -_previousStatus MediaStatus
+        -_previousRating int?
+        +Undo()
+    }
+    class RateMediaCommand {
+        +Execute()
+    }
+    class ConsumeMediaCommand {
+        +Execute()
+    }
+    class ReopenMediaCommand {
+        +Execute()
+    }
+    class AddMediaCommand {
+        +Execute()
+        +Undo()
+    }
+    class DeleteMediaCommand {
+        +Execute()
+        +Undo()
+    }
+    class EditMediaCommand {
+        +Execute()
+        +Undo()
+    }
+    class ImportMediaCommand {
+        +Execute()
+        +Undo()
+    }
+    class SetCoverCommand {
+        +Execute()
+        +Undo()
+    }
+    class CommandInvoker {
+        -_undo Stack
+        -_redo Stack
+        +Execute(command)
+        +Undo()
+        +Redo()
+        +Clear()
+    }
+    class WatchlistEditor {
+        <<receiver>>
+        +Add(item)
+        +Update(item, message)
+        +Delete(item)
+        +AddMany(items)
+    }
+    IWatchlistCommand <|.. LifecycleCommand
+    IWatchlistCommand <|.. AddMediaCommand
+    IWatchlistCommand <|.. DeleteMediaCommand
+    IWatchlistCommand <|.. EditMediaCommand
+    IWatchlistCommand <|.. ImportMediaCommand
+    IWatchlistCommand <|.. SetCoverCommand
+    LifecycleCommand <|-- RateMediaCommand
+    LifecycleCommand <|-- ConsumeMediaCommand
+    LifecycleCommand <|-- ReopenMediaCommand
+    CommandInvoker o-- IWatchlistCommand : history
+    LifecycleCommand o-- WatchlistEditor : receiver
+    AddMediaCommand o-- WatchlistEditor : receiver
+    DeleteMediaCommand o-- WatchlistEditor : receiver
+    EditMediaCommand o-- WatchlistEditor : receiver
+    ImportMediaCommand o-- WatchlistEditor : receiver
+    SetCoverCommand o-- WatchlistEditor : receiver
 ```
 
 ### Code where the pattern is visible
 
-[`Lab3/Behavioral/Commands/CommandInvoker.cs`](../Lab3/Behavioral/Commands/CommandInvoker.cs)
+[`Lab3/Behavioral/Commands/CommandInvoker.cs`](Lab3/Behavioral/Commands/CommandInvoker.cs):
 
 ```csharp
-public void Execute(IWatchlistCommand command)
+public sealed class CommandInvoker
 {
-    command.Execute();
-    _undo.Push(command);
-    _redo.Clear();
-    HistoryChanged?.Invoke(this, EventArgs.Empty);
-}
+    private readonly Stack<IWatchlistCommand> _undo = [];
+    private readonly Stack<IWatchlistCommand> _redo = [];
 
-public void Undo()
-{
-    if (!_undo.TryPeek(out var command))
+    public void Execute(IWatchlistCommand command)
     {
-        return;
+        command.Execute();
+        _undo.Push(command);
+        _redo.Clear();
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    command.Undo();
-    _undo.Pop();
-    _redo.Push(command);
-    HistoryChanged?.Invoke(this, EventArgs.Empty);
-}
-
-public void Redo()
-{
-    if (!_redo.TryPeek(out var command))
+    public void Undo()
     {
-        return;
+        if (!_undo.TryPeek(out var command)) return;
+        command.Undo();
+        _undo.Pop();
+        _redo.Push(command);
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
     }
-
-    command.Execute();
-    _redo.Pop();
-    _undo.Push(command);
-    HistoryChanged?.Invoke(this, EventArgs.Empty);
 }
 ```
 
-The invoker only pushes a command after `Execute` succeeds; a failed lifecycle
-transition (for example rating a planned entry) leaves both stacks untouched.
-`Undo` calls the command's inverse, which calls the receiver, which saves the
-Markdown file and publishes an observer event.
+Only a command that executed successfully enters the history. A new command clears the redo stack. `LifecycleCommand` stores the status and rating before it runs, so undo restores the exact previous values instead of guessing a reverse transition.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `Add_command_undo_removes_and_redo_restores` | Add can be undone and redone. |
-| `Delete_command_undo_restores_the_exact_entry` | Undo of delete restores id, title, notes and progress. |
-| `Edit_command_undo_restores_previous_values` | Undo of an edit restores all old fields. |
-| `Consume_undo_returns_to_planned` | Lifecycle undo returns to the previous state. |
-| `Rate_undo_returns_to_consumed_without_rating` | Rating undo removes the rating and returns to consumed. |
-| `New_command_clears_the_redo_stack` | A new command invalidates redo. |
-| `Import_command_undo_removes_every_imported_entry` | A multi-entry import is one undoable command. |
-| `Lifecycle_command_rejects_rating_a_planned_entry` | A failed command does not enter history. |
-| `Lifecycle_state_is_visible_through_the_context` | Planned → Consumed → Rated → Planned through the state context. |
+- `Add_command_undo_removes_and_redo_restores`: undo removes the added entry, redo restores it.
+- `Delete_command_undo_restores_the_exact_entry`: undo brings back the same entry with the same id.
+- `Edit_command_undo_restores_previous_values`: undo restores the previous title, notes and tags.
+- `Consume_undo_returns_to_planned` and `Rate_undo_returns_to_consumed_without_rating`: undo restores the exact previous status and rating.
+- `New_command_clears_the_redo_stack`: after undo, a new command removes the redo history.
+- `Import_command_undo_removes_every_imported_entry`: one undo removes a whole import.
 
 ## 5. Observer
 
 ### Intent and the real problem
 
-Adding a rating should update the counters, the cards and the activity feed
-without every screen calling every other screen. The subject publishes one
-change; observers decide what to do. The UI can subscribe and unsubscribe the
-statistics observer at runtime with the "Live stats" switch.
+After any change, the activity feed, the statistics counters and the list must update. If the editor called each of them directly, adding a new view would mean editing the editor. An **observer** subscribes to a subject and is notified of each change. The subject does not know the concrete observers.
 
-`WatchlistEvents` is the subject, `IWatchlistObserver` the observer interface.
-`StatisticsObserver`, `ActivityLogObserver` and `DelegateObserver` are concrete
-observers. A failing observer is reported through `ObserverFailed` but cannot
-block the save; an observer that tries to publish again is rejected to prevent
-notification loops.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class MainPage {
-  <<Client>>
-}
-class WatchlistEditor {
-  <<Publisher>>
-  +Add(item)
-  +Update(item, message)
-  +Delete(item)
-}
-class WatchlistEvents {
-  <<Subject>>
-  -List~IWatchlistObserver~ observers
-  +Subscribe(observer)
-  +Unsubscribe(observer)
-  +Publish(kind, itemId, message)
-}
-class IWatchlistObserver {
-  <<Observer>>
-  +OnChanged(change)
-}
-class StatisticsObserver {
-  <<ConcreteObserver>>
-  +WatchlistStatistics Statistics
-  +OnChanged(change)
-}
-class ActivityLogObserver {
-  <<ConcreteObserver>>
-  +IReadOnlyList~string~ Entries
-  +OnChanged(change)
-}
-class DelegateObserver {
-  <<ConcreteObserver>>
-  +OnChanged(change)
-}
-MainPage --> WatchlistEvents : subscribes
-WatchlistEditor --> WatchlistEvents : publishes
-WatchlistEvents o--> IWatchlistObserver : notifies
-IWatchlistObserver <|.. StatisticsObserver : implements
-IWatchlistObserver <|.. ActivityLogObserver : implements
-IWatchlistObserver <|.. DelegateObserver : implements
-StatisticsObserver --> MediaItem : reads snapshot
-note for WatchlistEvents "Owns subscribe/unsubscribe/notify; WatchlistEditor publishes after a save."
+    direction TB
+    class WatchlistEvents {
+        <<subject>>
+        -_observers List
+        +Subscribe(observer)
+        +Unsubscribe(observer)
+        +Publish(kind, itemId, message)
+    }
+    class IWatchlistObserver {
+        <<interface>>
+        +OnChanged(change)
+    }
+    class ActivityLogObserver {
+        +OnChanged(change)
+    }
+    class StatisticsObserver {
+        +Statistics WatchlistStatistics
+        +OnChanged(change)
+    }
+    class DelegateObserver {
+        -callback Action
+        +OnChanged(change)
+    }
+    class WatchlistEditor {
+        <<publisher of changes>>
+    }
+    WatchlistEvents o-- IWatchlistObserver : notifies
+    IWatchlistObserver <|.. ActivityLogObserver
+    IWatchlistObserver <|.. StatisticsObserver
+    IWatchlistObserver <|.. DelegateObserver
+    WatchlistEditor ..> WatchlistEvents : publishes after each change
 ```
 
 ### Code where the pattern is visible
 
-[`Lab3/Behavioral/Observers/WatchlistEvents.cs`](../Lab3/Behavioral/Observers/WatchlistEvents.cs)
+[`Lab3/Behavioral/Observers/WatchlistEvents.cs`](Lab3/Behavioral/Observers/WatchlistEvents.cs), abridged:
 
 ```csharp
 public void Publish(WatchlistChangeKind kind, int? itemId, string message)
@@ -387,11 +237,7 @@ public void Publish(WatchlistChangeKind kind, int? itemId, string message)
     IWatchlistObserver[] snapshot;
     lock (_gate)
     {
-        if (_publishing)
-        {
-            throw new InvalidOperationException("Observers must not publish another change.");
-        }
-
+        if (_publishing) throw new InvalidOperationException("Observers must not publish another change.");
         _publishing = true;
         snapshot = _observers.ToArray();
     }
@@ -400,14 +246,8 @@ public void Publish(WatchlistChangeKind kind, int? itemId, string message)
     {
         foreach (var observer in snapshot)
         {
-            try
-            {
-                observer.OnChanged(change);
-            }
-            catch (Exception ex)
-            {
-                ObserverFailed?.Invoke(this, ex);
-            }
+            try { observer.OnChanged(change); }
+            catch (Exception ex) { ObserverFailed?.Invoke(this, ex); }
         }
     }
     finally
@@ -417,86 +257,71 @@ public void Publish(WatchlistChangeKind kind, int? itemId, string message)
 }
 ```
 
-The subject takes a snapshot so subscribing/unsubscribing during a notification
-does not corrupt the loop. One bad observer is isolated; the repository has
-already saved before the notification.
+The subject notifies a snapshot, so an observer may unsubscribe while being notified. A failing observer is reported and does not block the save or the other observers. A nested publish is refused, so the observers cannot loop.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `All_subscribers_are_notified_and_unsubscribed_ones_are_not` | Both observers fire; after unsubscribe only the remaining one fires. |
-| `Statistics_observer_recomputes_counts_and_average` | Total/planned/consumed/rated and average rating update after changes. |
-| `Activity_log_keeps_the_latest_entries` | The log is bounded and keeps the newest message. |
-| `A_failing_observer_does_not_block_the_change_or_other_observers` | A throwing observer is isolated; the save and the other observer still succeed. |
-| `An_observer_cannot_publish_a_nested_change` | Reentrant publication is rejected instead of looping. |
+- `All_subscribers_are_notified_and_unsubscribed_ones_are_not`: subscribed observers receive the change, unsubscribed ones do not.
+- `Statistics_observer_recomputes_counts_and_average`: the counters match the library after a change.
+- `Activity_log_keeps_the_latest_entries`: the log keeps the newest 50 entries.
+- `A_failing_observer_does_not_block_the_change_or_other_observers`: one observer throws, the others still run.
+- `An_observer_cannot_publish_a_nested_change`: a nested publish is refused.
 
 ## 6. State
 
 ### Intent and the real problem
 
-The old model had a bool and a nullable rating, so invalid combinations were
-possible. The lifecycle is now explicit: an entry is planned, then consumed,
-then rated. Rating a planned entry is rejected; reopening clears the rating;
-undo restores the exact previous snapshot.
+An entry is Planned, Consumed or Rated, and each status allows different actions: a Planned entry cannot be rated, a Rated entry can be reopened, and so on. Written as `switch` statements on a status enum, these rules would be spread through the commands and the UI. The **State** pattern puts each status in its own class, and the context delegates each action to the current state.
 
-`MediaLifecycle` is the context; `IMediaState` is the state interface;
-`PlannedState`, `ConsumedState` and `RatedState` are the concrete states. The
-context delegates every operation to the current state; the state decides the
-next state.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class MainPage {
-  <<Client>>
-}
-class MediaLifecycle {
-  <<Context>>
-  -IMediaState state
-  +MediaItem Item
-  +MediaStatus Status
-  +string StateName
-  +Consume()
-  +Rate(rating)
-  +Reopen()
-  +Restore(status, rating)
-}
-class IMediaState {
-  <<State>>
-  +MediaStatus Status
-  +Consume(lifecycle)
-  +Rate(lifecycle, rating)
-  +Reopen(lifecycle)
-}
-class PlannedState {
-  <<ConcreteState>>
-}
-class ConsumedState {
-  <<ConcreteState>>
-}
-class RatedState {
-  <<ConcreteState>>
-}
-class MediaItem {
-  <<Data>>
-}
-MainPage --> MediaLifecycle : uses
-MediaLifecycle o--> IMediaState : current state
-IMediaState <|.. PlannedState : implements
-IMediaState <|.. ConsumedState : implements
-IMediaState <|.. RatedState : implements
-MediaLifecycle --> MediaItem : owns
-PlannedState ..> ConsumedState : after Consume
-ConsumedState ..> RatedState : after Rate
-ConsumedState ..> PlannedState : after Reopen
-RatedState ..> PlannedState : after Reopen
+    direction TB
+    class MediaLifecycle {
+        <<context>>
+        -_state IMediaState
+        +Item MediaItem
+        +Consume()
+        +Rate(rating)
+        +Reopen()
+        +Restore(status, rating)
+    }
+    class IMediaState {
+        <<interface>>
+        +Status MediaStatus
+        +Name string
+        +Consume(lifecycle)
+        +Rate(lifecycle, rating)
+        +Reopen(lifecycle)
+    }
+    class PlannedState {
+        +Consume(lifecycle)
+        +Rate(lifecycle, rating) throws
+        +Reopen(lifecycle)
+    }
+    class ConsumedState {
+        +Consume(lifecycle)
+        +Rate(lifecycle, rating)
+        +Reopen(lifecycle)
+    }
+    class RatedState {
+        +Consume(lifecycle)
+        +Rate(lifecycle, rating)
+        +Reopen(lifecycle)
+    }
+    MediaLifecycle o-- IMediaState : current state
+    IMediaState <|.. PlannedState
+    IMediaState <|.. ConsumedState
+    IMediaState <|.. RatedState
+    PlannedState ..> ConsumedState : Consume moves to
+    ConsumedState ..> RatedState : Rate moves to
+    RatedState ..> PlannedState : Reopen clears rating
 ```
 
 ### Code where the pattern is visible
 
-[`Lab3/Behavioral/States/PlannedState.cs`](../Lab3/Behavioral/States/PlannedState.cs) and
-[`Lab3/Behavioral/States/ConsumedState.cs`](../Lab3/Behavioral/States/ConsumedState.cs)
+[`Lab3/Behavioral/States/PlannedState.cs`](Lab3/Behavioral/States/PlannedState.cs):
 
 ```csharp
 public sealed class PlannedState : IMediaState
@@ -512,369 +337,179 @@ public sealed class PlannedState : IMediaState
 
     public void Rate(MediaLifecycle lifecycle, int rating) =>
         throw new InvalidOperationException("Mark the media as consumed before rating it.");
-
-    public void Reopen(MediaLifecycle lifecycle) { }
-}
-
-public sealed class ConsumedState : IMediaState
-{
-    public MediaStatus Status => MediaStatus.Consumed;
-    public string Name => "Consumed";
-
-    public void Consume(MediaLifecycle lifecycle) { }
-
-    public void Rate(MediaLifecycle lifecycle, int rating)
-    {
-        lifecycle.Item.Rate(rating);
-        lifecycle.MoveTo(new RatedState());
-    }
-
-    public void Reopen(MediaLifecycle lifecycle)
-    {
-        lifecycle.Item.Reopen();
-        lifecycle.MoveTo(new PlannedState());
-    }
 }
 ```
 
-The transition lives in one place per state; `MediaLifecycle` never needs a
-`switch` on the status. The domain `MediaItem` still enforces its basic
-invariants as a second line of defence.
+The rule "a planned entry cannot be rated" is written once, in `PlannedState`. The commands call `MediaLifecycle` and never inspect the status.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `Planned_rejects_rating` | Invalid transition is rejected and status stays planned. |
-| `Consume_moves_to_consumed_and_rate_moves_to_rated` | The normal path advances the state and rating. |
-| `Reopen_from_rated_clears_the_rating_and_returns_to_planned` | Reopen clears the score. |
-| `Restore_rejects_an_inconsistent_snapshot` | An impossible stored combination is refused. |
+- `Planned_rejects_rating`: rating a Planned entry throws.
+- `Consume_moves_to_consumed_and_rate_moves_to_rated`: the two valid transitions.
+- `Reopen_from_rated_clears_the_rating_and_returns_to_planned`: reopen clears the rating.
+- `Restore_rejects_an_inconsistent_snapshot`: a restore with a rating on a Planned entry is refused.
+- `Lifecycle_state_is_visible_through_the_context` (in `CommandTests`): the state name follows the transitions.
 
-## 7. Strategy
+## 7. Strategy (fourth pattern)
 
 ### Intent and the real problem
 
-The export format is chosen by the user at runtime. CSV is useful in a
-spreadsheet; Markdown is readable in the vault. The UI should not know either
-format's details, and adding a new format should not edit `MainPage`.
+The user can export the watchlist as CSV or as Markdown. The export code should not contain both formats in one class, and the choice should change at run time without restarting the app.
 
-`IWatchlistExporter` is the strategy; `CsvWatchlistExporter` and
-`MarkdownWatchlistExporter` are the concrete strategies; `ExportService` is
-the context that holds the current one. The Android action sheet calls
-`ExportService.Use(...)` before exporting.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class MainPage {
-  <<Client>>
-}
-class ExportService {
-  <<Context>>
-  -IWatchlistExporter exporter
-  +string Name
-  +Use(exporter)
-  +Export(items) string
-}
-class IWatchlistExporter {
-  <<Strategy>>
-  +string Name
-  +string FileExtension
-  +Export(items) string
-}
-class CsvWatchlistExporter {
-  <<ConcreteStrategy>>
-}
-class MarkdownWatchlistExporter {
-  <<ConcreteStrategy>>
-}
-MainPage --> ExportService : chooses format
-ExportService o--> IWatchlistExporter : current strategy
-IWatchlistExporter <|.. CsvWatchlistExporter : implements
-IWatchlistExporter <|.. MarkdownWatchlistExporter : implements
+    direction TB
+    class ExportService {
+        <<context>>
+        -_exporter IWatchlistExporter
+        +Use(exporter)
+        +Export(items) string
+    }
+    class IWatchlistExporter {
+        <<strategy>>
+        +Name string
+        +FileExtension string
+        +Export(items) string
+    }
+    class CsvWatchlistExporter {
+        +Export(items) string
+    }
+    class MarkdownWatchlistExporter {
+        +Export(items) string
+    }
+    ExportService o-- IWatchlistExporter : current strategy
+    IWatchlistExporter <|.. CsvWatchlistExporter
+    IWatchlistExporter <|.. MarkdownWatchlistExporter
 ```
 
 ### Code where the pattern is visible
 
-[`Lab3/Behavioral/Export/ExportService.cs`](../Lab3/Behavioral/Export/ExportService.cs)
+[`Lab3/Behavioral/Export/ExportService.cs`](Lab3/Behavioral/Export/ExportService.cs):
 
 ```csharp
 public sealed class ExportService(IWatchlistExporter initial)
 {
     private IWatchlistExporter _exporter = initial;
 
-    public IWatchlistExporter Exporter => _exporter;
-    public string Name => _exporter.Name;
-    public string FileExtension => _exporter.FileExtension;
-
     public void Use(IWatchlistExporter exporter) => _exporter = exporter;
 
-    public string Export(IReadOnlyCollection<MediaItem> items) =>
-        _exporter.Export(items);
+    public string Export(IReadOnlyCollection<MediaItem> items) => _exporter.Export(items);
 }
 ```
 
-The client depends on the interface; the format is one line of wiring. The CSV
-strategy escapes commas, quotes and newlines; the Markdown strategy emits a
-table plus per-entry sections and notes.
+The import side has the same shape: `IWatchlistImporter` is implemented by AniList, MAL XML and CSV, and `ImportService` never names a format.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `Csv_escapes_commas_quotes_and_newlines` | CSV stays valid with awkward titles and notes. |
-| `Markdown_export_contains_the_entry_and_its_notes` | Markdown includes status, rating and body. |
-| `Export_service_switches_strategy_at_runtime` | Swapping the exporter changes the output. |
+- `Export_service_switches_strategy_at_runtime`: the same service exports CSV, then Markdown, after `Use`.
+- `Csv_escapes_commas_quotes_and_newlines` and `Markdown_export_contains_the_entry_and_its_notes`: each strategy keeps its own format rules.
 
 ## 8. Pattern interaction and runtime behavior
 
-One normal path passes through several patterns:
+The sheet requires at least one execution path through two or more patterns, and at least one pattern that changes behavior at run time. Both are met by the **Rate** action:
 
 ```text
-MainPage
-  -> CommandInvoker.Execute(ConsumeMediaCommand)
-  -> WatchlistEditor receiver
-  -> MediaLifecycle / ConsumedState             State
-  -> MarkdownWatchlistStore.Save + index
-  -> WatchlistEvents.Publish                    Observer
-  -> StatisticsObserver + ActivityLog + UI refresh
+User taps "Rate 8/10" on a card
+  client → CommandInvoker.Execute(RateMediaCommand)          (Command)
+    → RateMediaCommand.Execute()
+      → MediaLifecycle.Rate(8)                               (State context)
+        → ConsumedState.Rate → RatedState                    (State transition)
+      → WatchlistEditor.Update(item, "Rated … 8/10.")        (receiver)
+        → repository.Update(item) → Markdown vault
+        → WatchlistEvents.Publish(Updated, …)                (Observer subject)
+          → ActivityLogObserver.OnChanged                   (feed updated)
+          → StatisticsObserver.OnChanged                    (counters updated)
+          → list refresh observer                           (UI updated)
 ```
 
-Undo reverses the same path:
+Run-time behavior changes in three places, without recompiling:
 
-```text
-CommandInvoker.Undo()
-  -> ConsumeMediaCommand.Undo()
-  -> MediaLifecycle.Restore(previous status, previous rating)
-  -> WatchlistEditor.Update
-  -> WatchlistEvents.Publish -> UI refresh
-```
-
-Runtime changes required by the lab:
-
-- undo/redo after add, edit, delete, consume, rate, reopen, cover and import;
-- the **Live stats** switch subscribes/unsubscribes `StatisticsObserver`;
-- lifecycle transitions move between three concrete states;
-- the export action sheet switches the export **Strategy** at runtime;
-- filters/sorting rebuild the cards immediately;
-- an observer can be added/removed without touching the subject.
+- **Command:** Undo and Redo change the library state at run time.
+- **State:** the same "Rate" call does different things depending on the entry's current status, and an illegal call is refused.
+- **Strategy:** the export format is swapped with `ExportService.Use` while the app runs.
+- **Observer:** `MainPage` subscribes its statistics and refresh observers at run time, and `WatchlistEvents` lets any observer unsubscribe while the app runs.
 
 ## 9. Import and export
 
-### AniList
+| Source | Format | Notes |
+|---|---|---|
+| AniList | GraphQL JSON | status, score, format, cover URL mapped to `MediaItem` |
+| MyAnimeList | XML export | anime and manga rows, invalid XML reported |
+| Generic | CSV | quoted fields, optional columns, a title column is required |
 
-[`Lab3/Behavioral/Import/AniListImporter.cs`](../Lab3/Behavioral/Import/AniListImporter.cs)
-posts a GraphQL query with the public username. No token is required for a
-public profile. It requests anime and manga collections, `score(format:
-POINT_10)`, progress, format, genres, title, cover and site URL. Status mapping:
-`COMPLETED` + score becomes rated; `COMPLETED` without a score becomes
-consumed; everything else is planned. The source status is kept in the
-frontmatter.
-
-### MAL XML
-
-[`Lab3/Behavioral/Import/MalXmlImporter.cs`](../Lab3/Behavioral/Import/MalXmlImporter.cs)
-reads the file MAL itself produces from **Profile → Export/Import**. OAuth would
-require a registered client id and secrets; the XML avoids both. It parses
-`<anime>` and `<manga>` rows, score, watched/read progress, type, status, image
-and MAL id. The XML reader prohibits DTDs and resolves no external entities.
-
-### CSV
-
-[`Lab3/Behavioral/Import/CsvWatchlistImporter.cs`](../Lab3/Behavioral/Import/CsvWatchlistImporter.cs)
-is the “any other service” path: a CSV with at least a `Title` column. Optional
-`Kind`, `Category`, `Status`, `Rating`, `Progress` and `Tags` columns are
-mapped case-insensitively; unknown headers are ignored. The app reads the file
-through Android's document picker, so no extra permission is needed.
-
-Duplicate detection in `ImportService` normalizes title punctuation,
-diacritics and case, then compares title + kind. The preview reports new and
-duplicate rows; import is one `ImportMediaCommand`. While it runs,
-`ImportProgress` reports `processed/total` and the current title to the UI
-progress bar; the whole import remains a single undoable command, and a
-failure rolls back every entry added in that run.
-
-### Export
-
-The export action sheet chooses CSV or Markdown, writes the file under the app
-cache, and opens Android's share sheet. The markdown export is a single file
-with a table and per-entry sections, so it can be sent to someone who does not
-have the app.
+Duplicates are detected by normalised title and kind before import. An import is one undoable command, and its progress is reported one entry at a time (`ImportProgress`). Export produces CSV or Markdown through `ExportService`.
 
 ## 10. Library location and permissions
 
-Lab 3 is local-first, but on Android app-private storage is not easy to browse
-in the Files app. The first launch therefore shows `StorageSetupPage`:
+Lab 3 is local-first, but on Android the app-private storage is not easy to browse in the Files app. The first launch therefore shows `StorageSetupPage`:
 
-- **Shared Documents** — target `/storage/emulated/0/Documents/TMPS-Watchlist`.
-  On Android 11+ the page checks `Environment.IsExternalStorageManager`; if it
-  is not granted, the button opens the system “All files access” settings for
-  the package. On older Android it requests the normal storage runtime
-  permission. Once granted, the app creates the folder, copies any existing
-  app-private entries/covers with `VaultMigrator` (without overwriting target
-  files), and stores the path in `Preferences`. This prompt was verified on the
-  emulator: with the permission denied, tapping the button focused the
-  “All files access → Watchlist” system screen.
-- **App storage** — `FileSystem.AppDataDirectory/library`; no permission, but
-  not directly visible in Files. Export/share remains available.
+- **Shared Documents**: `/storage/emulated/0/Documents/TMPS-Watchlist`. On Android 11+ the page checks `Environment.IsExternalStorageManager`. If it is not granted, the button opens the system "All files access" settings for the package. Once granted, the app creates the folder, copies any existing app-private entries and covers with `VaultMigrator` (without overwriting target files), and stores the path in `Preferences`.
+- **App storage**: `FileSystem.AppDataDirectory/library`. No permission is needed, but the folder is not visible in Files. Export and share remain available.
 
-On later launches the saved path is reused. If the folder is missing or the
-permission was revoked, the setup page appears again. `TMPS_LAB3_LIBRARY` can
-override the path for desktop/testing.
+On later launches the saved path is reused. If the folder is missing or the permission was revoked, the setup page appears again. `TMPS_LAB3_LIBRARY` overrides the path for desktop and tests.
 
-The shared option uses `MANAGE_EXTERNAL_STORAGE`, which is appropriate for a
-sideloaded lab APK but restricted by Google Play policy for general apps. The
-proper production alternative would be the Storage Access Framework folder
-picker; the current physical-file store keeps the Markdown vault simple and
-fully compatible with Lab 2.
+The shared option uses `MANAGE_EXTERNAL_STORAGE`, which suits a sideloaded lab APK but is restricted by Google Play policy. The production alternative is the Storage Access Framework folder picker. The physical-file store keeps the Markdown vault simple and compatible with Lab 2.
 
-![First-run library storage choice](../docs/lab3-storage.png)
+![First-run library storage choice](docs/lab3-storage.png)
 
-## 11. User interface
+## 11. Patterns not implemented
 
-`MainPage` shows:
-
-- a stats strip (total, planned, consumed, rated, average);
-- Add / Import / Export / Undo / Redo / Reload / Activity;
-- Live stats switch;
-- search by title, category or tag;
-- status filter (All / Planned / Completed / Consumed / Rated) and sort picker;
-- cards with local/remote cover, title, kind/category/tags, status, progress,
-  notes preview, and status-aware actions.
-
-`EditPage` edits metadata, accepts a free-text custom kind (stored as
-`kind: custom` + `customKind: …`), and offers an existing-category picker next
-to the category field. `CoverPickerPage` searches with thumbnails, provider
-label and local download. `ImportPage` chooses AniList, MAL XML or CSV,
-previews new/duplicate counts, then imports with a progress bar.
-The app has three bottom tabs in the Aniyomi style: **Library**, **Activity**
-(the full activity feed, newest first) and **Settings**. The theme has an AMOLED
-black option that applies only in dark mode; light, dark and AMOLED palettes
-are kept in `Appearance.cs`, and all pages read the same palette keys.
-
-`SettingsPage` (the Settings tab) switches the theme between System/Light/Dark and
-selects the cover search engine (Auto, Wikimedia, Open Library or TVmaze); both
-choices are stored in `Preferences` and applied without a restart. All pages
-use `AppThemeBinding` colours, so dark mode covers the whole app. Covers are
-resolved from the local vault first and fall back to the remote URL, so an
-entry remains visible even if the cover file is missing.
-
-The verified emulator run (Medium_Phone API 37) chose shared Documents, created
-the vault, restarted into the saved path, then loaded an entry written directly
-into the shared folder. The card shows the cover, rating and the shared path:
-
-![Lab 3 running on Android](../docs/lab3-screen.png)
+- **Chain of Responsibility.** Would pass a request along handlers until one handles it. The import pipeline could be a chain (AniList, then MAL, then CSV), but the current design picks the importer by the user's choice, so the chain would be forced.
+- **Interpreter** (good to know, not counted). Would evaluate a small query language such as `status:consumed rating>7`. The search box uses plain text matching, so the pattern is not present.
+- **Iterator.** Would traverse the library without exposing the list. The app iterates the list directly with LINQ, which is enough here.
+- **Mediator.** Would route communication between UI components through one object. `WatchlistEvents` is close, but it only broadcasts changes and does not let components talk to each other, so the report does not claim the pattern.
+- **Memento.** Would capture and restore state without breaking encapsulation. `LifecycleCommand` and `SetCoverCommand` store the previous values, which is a memento in spirit, but the snapshot is not a separate class.
+- **Template Method.** Would define an algorithm skeleton in a base class. The importers share no steps, so the pattern would be forced.
+- **Visitor.** Would add operations to the entry types without changing them. The entry types are stable, so the pattern is not needed.
 
 ## 12. Tests and evidence
 
-Command:
+Command (run from the repository root):
 
 ```powershell
-dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
+dotnet test Tests/Watchlist.Tests/Watchlist.Tests.csproj
 ```
 
-Verified result:
+Result on this repository: `Passed! - Failed: 0, Passed: 55, Skipped: 0, Total: 55`. Test files: `CommandTests` (9), `ObserverTests` (5), `StateTests` (4), `ExportTests` (3), `ImportTests` and `CsvImportTests` (the rest), and the Lab 2 `CoverPatternTests`.
 
-```text
-Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 115 ms
-```
+Runtime evidence on the `Medium_Phone_API_37` emulator is in §13.
 
-The Lab 3 tests cover all four claimed patterns, the import mapping, the CSV
-reader and the vault migration:
+The main library screen on the emulator, with the bottom tabs and the Command, Observer, State and Strategy footer:
 
-```text
-Watchlist.Tests.CommandTests.*                 9 tests
-Watchlist.Tests.ObserverTests.*                5 tests
-Watchlist.Tests.StateTests.*                   4 tests
-Watchlist.Tests.ExportTests.*                   3 tests
-Watchlist.Tests.ImportTests.*                  7 tests
-Watchlist.Tests.CsvImportTests.*                3 tests
-Watchlist.Tests.VaultMigratorTests.*            2 tests
-```
-
-The shared project also adds a custom-kind round trip in `MarkdownVaultTests`
-and keeps the Lab 2 structural tests green (12 cover-pattern tests, 10 vault
-tests).
-
-Run `dotnet test --list-tests` to see the exact names; the pattern tables in
-sections 4–7 list the names and what each one proves.
+![Lab 3 main screen](docs/lab3-main.png)
 
 ## 13. Build evidence
-
-The Android client builds with .NET 10, MAUI Android workload, JDK 21 and the
-Android SDK:
 
 ```powershell
 $env:JAVA_HOME = "C:\path\to\jdk-21"
 $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
-dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
+dotnet publish .\Lab3\App\Lab3.csproj -c Release -f net10.0-android -p:AndroidKeyStore=false
 ```
 
-Verified output:
+The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK tooling (`XA0030`). The repository's `build-all-labs.yml` workflow installs the MAUI Android workload and JDK 21 and builds the Lab 1, 2 and 3 APKs on every push. Tags `v*` and `labs-v*` also publish a GitHub Release with every APK attached.
 
-```text
-Watchlist.Core -> ...\Watchlist.Core.dll
-Watchlist.Behavioral -> ...\Watchlist.Behavioral.dll
-Lab3 -> ...\Lab3.dll
-Build succeeded.
-    0 Warning(s)
-    0 Error(s)
-```
-
-APK:
-
-```text
-Lab3/App/bin/Debug/net10.0-android/net.plesu.dinu.shameless.watchlist-Signed.apk
-```
-
-The debug APK used for the emulator run is built with
-`-p:EmbedAssembliesIntoApk=true` so it installs without the IDE's fast
-deployment step. A Release publish with the same command as CI (`-c Release`,
-`-p:AndroidKeyStore=false`) also completed with AOT compilation, with no XamlC
-binding warnings.
-
-The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
-tooling (`XA0030`). The repository's `build-all-labs.yml` workflow installs the
-workload and JDK 21 and builds the Lab 1, Lab 2 and Lab 3 APKs on every push. The release job on `labs-v*` and `v*` tags
-workflow runs on `labs-v*` tags, runs the tests, publishes the signed Lab 2
-and Lab 3 APKs, and attaches both plus the reports to a GitHub Release.
-
-Runtime smoke test: the app was installed on the `Medium_Phone_API_37`
-emulator. The first-run storage page was shown; shared Documents was chosen,
-`/storage/emulated/0/Documents/TMPS-Watchlist` was created, the app was
-restarted into the saved path, and a Markdown entry placed in the shared
-folder loaded with its cover. The debug APK was signed with the standard
-Android debug keystore; for a manual install without the IDE's fast-deployment
-step, it also needs `-p:EmbedAssembliesIntoApk=true`. A normal IDE deploy
-handles both steps automatically. The screenshots above are from that run.
+APK produced by CI and by the local publish: `net.plesu.dinu.shameless.watchlist-Signed.apk`.
 
 ## 14. Requirements checklist
 
-| Requirement | Where it is met |
+| Requirement | Status |
 |---|---|
-| At least 1 behavioral pattern | Command (§4), Observer (§5), State (§6), Strategy (§7) |
-| Patterns perform real tasks of the system | Undo/redo of every edit, live statistics, the guarded lifecycle and the export format switch are all normal app actions (§8) |
-| Behavioral patterns alongside the structural ones | The cover picker runs Lab 2's Adapter → Decorator → Proxy pipeline, and the chosen cover is applied by an undoable `SetCoverCommand` that publishes an Observer event (§2) |
-| One client for the whole system | `Lab3/App`, the MAUI Android app, is the only client of Lab 3 |
-| Modules separated by responsibility | `Commands`, `Observers`, `States`, `Export`, `Import` in `Watchlist.Behavioral`; UI in `App`; domain and storage in Lab 2's `Watchlist.Core` (§3) |
-| Git hosting, README and report | This repository, `Lab3/README.md` and this report |
+| At least 3 behavioral patterns, full structure | Command (invoker, command, receiver), Observer (subject, observer), State (context, state, 3 concrete states), Strategy (context, strategy, 2 concrete) |
+| Patterns interact (one path through 2+ patterns) | Yes, §8 Rate path (Command, State, Observer) |
+| Client code depends on abstractions | Yes, `IWatchlistCommand`, `IWatchlistObserver`, `IMediaState`, `IWatchlistExporter` |
+| Open for extension | Yes: a new strategy, command, state or observer is a new class |
+| Build on Lab 2 | Yes, §2 (repository, Builder, cover pipeline) |
+| Clean project structure | Yes, §3 |
+| Runnable demo with readable output | Android app on the emulator (§13 and the screenshots in the repository) |
+| Behavior changes at runtime | Yes, §8 (undo and redo, state transitions, export strategy, observers) |
+| 2+ unit tests per pattern | Yes, §4–§7 |
+| UML class diagram per pattern | Yes, §4–§7 (Mermaid) |
+| Code snippet per pattern with explanation | Yes, §4–§7 |
 
 ## 15. Conclusions
 
-The hardest part was keeping two sources of truth consistent: the Markdown files
-and the in-memory list/command history. The solution is to make every mutation
-go through `WatchlistEditor`, save immediately, and publish one event; Reload
-clears the command history because old item references are no longer valid.
-Undo for lifecycle commands also needed an exact previous-state snapshot rather
-than an inverse transition, because consumed-without-rating and rated are
-different states.
-
-I would add a file watcher or a merge/reload prompt before calling this a
-multi-device app. The current model assumes one app instance at a time. I would
-also add a real film/TV metadata provider with an API key; the keyless
-providers are fine for a lab, but poster relevance is limited.
-
-The storage choice is a platform compromise. Shared Documents makes the vault
-readable outside the app but needs the broad All files access permission; the
-proper production version is a SAF folder picker with a content-URI-backed
-store. App storage remains the safe no-permission fallback.
+- The hardest part was the undo of a lifecycle change. Storing the previous status and rating in the command was simpler than deriving the reverse transition, and it stays correct when a state rule changes.
+- The observers had to be non-blocking. A failing or re-entrant observer must not break a save, so the subject takes a snapshot and refuses nested publishes.
+- If I were designing it again, I would make the import pipeline a Chain of Responsibility from the start, so that a new source is a new handler and not a new `switch` branch.

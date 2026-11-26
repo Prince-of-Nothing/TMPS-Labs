@@ -1,613 +1,419 @@
 # Lab 2 Report — Structural Design Patterns
 
-**Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
-**Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 10 MAUI (Android)  
-**Year:** 2026  
-**Instructor:** Istrati Daniel
-
----
+**Course:** TMPS · **Author:** Pleșu Dinu (FAF241) · **Technology:** C# / .NET 10, MAUI Android client
+**Repository:** `Lab2/Core` (shared library), `Lab2/App` (Android client), `Tests/Watchlist.Tests` (unit tests)
 
 ## Objectives
 
-1. Study and understand the Structural Design Patterns.
-2. As a continuation of the previous laboratory work, think about the
-   functionalities that the system will need to provide to the user.
-3. Implement some additional functionalities, or create a new project, using
-   structural design patterns.
+- Explain the intent of each structural pattern and the problem it solves.
+- Recognise where a structural pattern fits naturally in a codebase, and where it would be forced.
+- Implement the patterns so client code depends on abstractions, not concrete classes.
+- Show that the design is open to extension: new variants are added without editing existing classes.
+- Defend design choices and adapt the code to a new requirement during the defence.
 
-## Main tasks
+## Task
 
-By extending the project, implement at least 3 structural design patterns:
+Implement **at least three** structural patterns in one project, and learn the rest that were not implemented.
 
-- the implemented patterns should help perform the tasks the system offers;
-- the object creation mechanisms/patterns can now be buried inside the
-  functionalities instead of being used in the client;
-- there should be only one client for the whole system.
+Implemented here: **Adapter**, **Decorator**, **Proxy**. Not implemented: Bridge, Composite, Facade (only a partial use-case object, see §6), Flyweight. Their intent and where they would fit are in §9.
 
 ## Theory
 
-Structural patterns describe how classes and objects are composed into larger
-structures while keeping those structures flexible. Class-level structural
-patterns rely on inheritance; object-level ones rely on composition, which can
-be rearranged at runtime. The common ones are Adapter, Bridge, Composite,
-Decorator, Facade, Flyweight and Proxy.
+Structural patterns describe how classes and objects are composed into larger structures while keeping those structures flexible.
 
-This lab uses three of them, all on the same cover workflow:
+- **Adapter** converts one interface into the one a client expects, so incompatible code can work together.
+- **Decorator** wraps an object that already has an interface and adds responsibilities at run time, in any order.
+- **Proxy** stands in for a real object with the same interface and controls access to it (caching, checks, lazy loading).
 
-- **Adapter** converts an interface the project does not own into the one the
-  client expects.
-- **Decorator** wraps an object in another object with the same interface to
-  add behavior without changing the original class.
-- **Proxy** stands in for an expensive or remote object with the same
-  interface and controls access to it (caching, validation, lazy loading).
-
----
+The common rule is that a client talks to an interface (`ICoverCatalog`, `ICoverImage`). Whether the object behind it is a provider adapter, a decorator, or a proxy is invisible to the client.
 
 ## 1. Domain description
 
-The application is a **local consumed-media watchlist**. A user adds films,
-shows, books, games, anime or manga, gives them a category, tags, progress and
-notes, marks them consumed, rates them from 1 to 10, and finds a cover online.
+The application is a personal **watchlist** of films, series, anime, manga, books and games. Each entry has a title, kind, category, tags, status (Planned, Consumed, Rated), an optional rating, notes, and a **cover image**. Entries are stored as human-readable Markdown files in a local vault, with covers as image files next to them.
 
-Unlike the earlier labs, the library is stored as a **Markdown vault**, not
-JSON:
-
-```text
-library/
-  index.md
-  entries/0001-the-matrix.md
-  covers/0001.jpg
-```
-
-One entry is one file with frontmatter and a notes body:
-
-```md
----
-id: 1
-title: The Matrix
-kind: film
-category: Sci-Fi
-tags: [action, classic]
-status: rated
-rating: 9
-progress: 1/1
-cover: covers/0001.jpg
----
-# The Matrix
-
-Watched on a rainy night.
-```
-
-The folder is useful without the app: `index.md` is a generated overview, the
-entry files are readable/editable in any editor or Obsidian, and covers are
-normal image files. The app preserves unknown frontmatter keys and the notes
-body, reports malformed files instead of overwriting them, and writes
-atomically.
+Lab 2 adds the **cover search**: the user searches a public provider for a poster or cover, sees thumbnails, picks one, and the image is downloaded once and stored in the vault. Lab 2 is the structural part of that pipeline.
 
 ## 2. Project structure
 
 ```text
 Lab2/
-├── Core/                           Watchlist.Core (shared with Lab 3)
-│   ├── Domain/
-│   │   ├── MediaItem.cs            state + rating rules
-│   │   ├── MediaKind.cs
-│   │   ├── MediaStatus.cs
-│   │   └── MediaItemBuilder.cs     reused Builder
-│   ├── Storage/
-│   │   ├── MarkdownWatchlistStore.cs
-│   │   ├── MarkdownEntryCodec.cs
-│   │   ├── VaultIndexWriter.cs
-│   │   ├── VaultMigrator.cs      copy between storage locations
-│   │   ├── WatchlistRepository.cs
-│   │   └── WatchlistStoreFactory.cs reused Factory Method
+├── Core/                        shared library (no UI code)
+│   ├── Domain/                  MediaItem, MediaItemBuilder (Lab 1 Builder), MediaKind, MediaStatus
+│   ├── Storage/                 Markdown vault: entry codec, repository, migrator
 │   └── CoverSearch/
-│       ├── CoverCandidate.cs
-│       ├── ICoverCatalog.cs        target interface
-│       ├── RoutingCoverCatalog.cs
-│       ├── CoverService.cs
-│       ├── CoverServiceFactory.cs  assembles the pipeline
-│       ├── Providers/              third-party API clients
-│       ├── Adapters/               Adapter pattern
-│       ├── Decorators/             Decorator pattern
-│       └── Images/                 Proxy pattern
-└── App/                            Lab 2 MAUI client
-    ├── MainPage.xaml(.cs)           cards, stats, actions
-    ├── EditPage.xaml(.cs)           metadata form
-    ├── CoverPickerPage.xaml(.cs)    provider search + download
-    ├── PatternsPage.xaml(.cs)       structural chain in the UI
-    └── AppServices.cs               client composition root
+│       ├── ICoverCatalog.cs     Target interface used by every client
+│       ├── Adapters/            Adapter: Wikimedia, Open Library, TVmaze
+│       ├── Providers/           Adaptee clients for the three public APIs
+│       ├── Decorators/          Filtering and Caching decorators
+│       ├── RoutingCoverCatalog  picks a provider per media kind
+│       ├── CoverServiceFactory  assembles the pipeline in one place
+│       ├── CoverService         use case: search, then save through the proxy
+│       └── Images/              ICoverImage, RemoteCoverImage (real subject), CachedCoverImageProxy
+├── App/                         .NET MAUI Android client (pages only, no pattern wiring)
+│   ├── MainPage, EditPage, CoverPickerPage, PatternsPage
+│   └── AppServices.cs           asks the Core factory for a CoverService
+Tests/Watchlist.Tests/           CoverPatternTests and the other unit tests
 ```
 
-The MAUI client depends on `CoverService`, `IWatchlistStore` and
-`WatchlistRepository`; it never constructs a provider, adapter, decorator or
-file format itself. Object creation is buried in Core, as the task asks:
-
-- `MarkdownWatchlistStoreFactory` (Factory Method) creates the store;
-- `CoverServiceFactory` builds the provider clients, the three adapters, the
-  routing table and the decorator chain, and returns a ready `CoverService`.
-
-`AppServices` is a few lines that call those two factories, and Lab 3 calls
-the same `CoverServiceFactory`, so the pipeline is defined once.
-
-```csharp
-public static ICoverCatalog CreateCatalog(HttpClient http)
-{
-    var wikimedia = new WikimediaCoverAdapter(new WikimediaCommonsClient(http));
-    var openLibrary = new OpenLibraryCoverAdapter(new OpenLibraryClient(http));
-    var tvMaze = new TvMazeCoverAdapter(new TvMazeClient(http));
-
-    var routing = new RoutingCoverCatalog(
-        new Dictionary<MediaKind, ICoverCatalog>
-        {
-            [MediaKind.Book] = openLibrary,
-            [MediaKind.Manga] = openLibrary,
-            [MediaKind.Series] = tvMaze,
-            [MediaKind.Anime] = tvMaze,
-            [MediaKind.Film] = wikimedia,
-            [MediaKind.Game] = wikimedia,
-        },
-        wikimedia);
-
-    return new FilteringCoverCatalog(new CachingCoverCatalog(routing));
-}
-```
+The client never builds providers, adapters or decorators. `AppServices` calls `CoverServiceFactory.Create(...)` and receives a `CoverService`. This keeps creation inside the functionality, not in the client.
 
 ## 3. Adapter
 
-The Mermaid diagrams follow the Refactoring Guru structure: the role is the
-stereotype in the box, and the box title is the real project class.
-
 ### Intent and the real problem
 
-`ICoverCatalog` is the app's target interface:
+The public Wikimedia Commons API returns `query.pages[]` records with `imageinfo`, `thumburl`, `mime`. The application's search (`ICoverCatalog`) only understands `CoverCandidate(Title, ThumbnailUrl, ImageUrl, Source)`. Without an adapter, the search code would parse Wikimedia JSON shapes and clean titles (`File:` prefix, underscores, extension), and would have to do it again for Open Library and TVmaze.
 
-```csharp
-public interface ICoverCatalog
-{
-    Task<IReadOnlyList<CoverCandidate>> SearchAsync(
-        string query, MediaKind kind, CancellationToken ct = default);
-}
-```
+The adaptee is a library the project does not own: the Wikimedia API. Its models are not changed.
 
-Three public services answer with completely different shapes:
-
-- Wikimedia Commons returns nested `query.pages[].imageinfo[]` with
-  `thumburl`, `url` and `mime`;
-- Open Library returns `docs[]` with `cover_i` and `author_name`;
-- TVmaze returns `[] { show: { name, image: { medium, original } } }`.
-
-The adaptees are public APIs the project does not own, so this is a real
-Adapter, not a wrapper around our own class. Each client models the foreign
-response; each adapter translates it to `CoverCandidate`. Adding a new provider
-means adding a client and an adapter only.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class MainPage {
-  <<Client>>
-}
-class CoverService {
-  <<Client>>
-  +SearchAsync(query, kind, ct) Task
-  +SaveAsync(entryId, candidate, ct) Task
-}
-class ICoverCatalog {
-  <<Target>>
-  +SearchAsync(query, kind, ct) Task
-}
-class CoverCandidate {
-  <<DTO>>
-  +string Title
-  +string ThumbnailUrl
-  +string ImageUrl
-  +string Provider
-}
-class WikimediaCoverAdapter {
-  <<Adapter>>
-  -WikimediaCommonsClient client
-  +SearchAsync(query, kind, ct) Task
-}
-class OpenLibraryCoverAdapter {
-  <<Adapter>>
-}
-class TvMazeCoverAdapter {
-  <<Adapter>>
-}
-class WikimediaCommonsClient {
-  <<Adaptee>>
-  +SearchAsync(query, limit, ct) Task
-}
-class OpenLibraryClient {
-  <<Adaptee>>
-}
-class TvMazeClient {
-  <<Adaptee>>
-}
-class RoutingCoverCatalog {
-  <<Router>>
-  -Dictionary byKind
-  -ICoverCatalog fallback
-  +SearchAsync(query, kind, ct) Task
-}
-MainPage --> CoverService : uses
-CoverService --> ICoverCatalog : target
-ICoverCatalog <|.. WikimediaCoverAdapter : implements
-ICoverCatalog <|.. OpenLibraryCoverAdapter : implements
-ICoverCatalog <|.. TvMazeCoverAdapter : implements
-ICoverCatalog <|.. RoutingCoverCatalog : implements
-WikimediaCoverAdapter --> WikimediaCommonsClient : adapts
-OpenLibraryCoverAdapter --> OpenLibraryClient : adapts
-TvMazeCoverAdapter --> TvMazeClient : adapts
-RoutingCoverCatalog o--> ICoverCatalog : delegates by kind
-WikimediaCoverAdapter ..> CoverCandidate : creates
-OpenLibraryCoverAdapter ..> CoverCandidate : creates
-TvMazeCoverAdapter ..> CoverCandidate : creates
+    direction LR
+    class ICoverCatalog {
+        <<interface>>
+        +SearchAsync(query, kind) IReadOnlyList~CoverCandidate~
+    }
+    class WikimediaCoverAdapter {
+        -client WikimediaCommonsClient
+        +SearchAsync(query, kind) IReadOnlyList~CoverCandidate~
+        -CleanTitle(title) string
+    }
+    class WikimediaCommonsClient {
+        <<adaptee>>
+        +SearchAsync(query, limit) IReadOnlyList~WikimediaImage~
+    }
+    class WikimediaImage {
+        <<record>>
+        Title
+        ThumbnailUrl
+        ImageUrl
+        MimeType
+    }
+    class CoverCandidate {
+        <<record>>
+        Title
+        ThumbnailUrl
+        ImageUrl
+        Source
+    }
+    ICoverCatalog <|.. WikimediaCoverAdapter : implements
+    WikimediaCoverAdapter --> WikimediaCommonsClient : adapts
+    WikimediaCommonsClient ..> WikimediaImage : returns
+    WikimediaCoverAdapter ..> CoverCandidate : produces
 ```
+
+The same shape is used for `OpenLibraryCoverAdapter` → `OpenLibraryClient` and `TvMazeCoverAdapter` → `TvMazeClient`.
 
 ### Code where the pattern is visible
 
-[`Lab2/Core/CoverSearch/Adapters/WikimediaCoverAdapter.cs`](../Lab2/Core/CoverSearch/Adapters/WikimediaCoverAdapter.cs)
+[`Lab2/Core/CoverSearch/Adapters/WikimediaCoverAdapter.cs`](Lab2/Core/CoverSearch/Adapters/WikimediaCoverAdapter.cs):
 
 ```csharp
-public async Task<IReadOnlyList<CoverCandidate>> SearchAsync(
-    string query, MediaKind kind, CancellationToken cancellationToken = default)
+public sealed class WikimediaCoverAdapter(WikimediaCommonsClient client) : ICoverCatalog
 {
-    if (string.IsNullOrWhiteSpace(query))
+    public async Task<IReadOnlyList<CoverCandidate>> SearchAsync(
+        string query,
+        MediaKind kind,
+        CancellationToken cancellationToken = default)
     {
-        return [];
-    }
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
 
-    var images = await client.SearchAsync(query, cancellationToken: cancellationToken);
-    return images
-        .Where(image => image.MimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-        .Where(image => !image.MimeType.Contains("svg", StringComparison.OrdinalIgnoreCase))
-        .Select(image => new CoverCandidate(
-            CleanTitle(image.Title),
-            image.ThumbnailUrl,
-            image.ImageUrl,
-            "Wikimedia Commons"))
-        .ToArray();
+        var images = await client.SearchAsync(query, cancellationToken: cancellationToken);
+        return images
+            .Where(image => image.MimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            .Where(image => !image.MimeType.Contains("svg", StringComparison.OrdinalIgnoreCase))
+            .Select(image => new CoverCandidate(
+                CleanTitle(image.Title),
+                image.ThumbnailUrl,
+                image.ImageUrl,
+                "Wikimedia Commons"))
+            .ToArray();
+    }
 }
 ```
 
-The adapter is the only code that knows Wikimedia's `File:` prefix and MIME
-field. The rest of the application only sees `CoverCandidate`.
+The adapter translates the adaptee's model into the target `CoverCandidate`, so the rest of the app never sees Wikimedia JSON. The sheet's "adapt a library you cannot change" rule is met: Wikimedia Commons is a public API this project does not own.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `Wikimedia_adapter_maps_foreign_response_to_cover_candidates` | A foreign JSON payload becomes candidates with a cleaned title, thumbnail, original URL and provider; SVG is rejected. |
-| `OpenLibrary_adapter_skips_books_without_a_cover_id` | Books without `cover_i` are omitted instead of producing a broken link; author and cover URLs are mapped. |
+- `Wikimedia_adapter_maps_foreign_response_to_cover_candidates`: checks the mapping from `WikimediaImage` to `CoverCandidate`, including the title cleaning.
+- `OpenLibrary_adapter_skips_books_without_a_cover_id`: checks that an Open Library record with no cover id is dropped, not mapped.
 
 ## 4. Decorator
 
 ### Intent and the real problem
 
-Search results need two independent behaviors: do not ask the same provider
-twice, and never hand unusable links to the UI. Both must work in any order and
-must not change `ICoverCatalog` for the client.
+Every cover search needs the same two extras: only usable hits (valid HTTP links, no SVG/TIFF/PDF, no duplicates, at most 20 results) and a cache so that repeating a query does not call the provider again. Putting these checks inside each adapter would duplicate them. A decorator adds them on top of any `ICoverCatalog`, in any order.
 
-`CoverCatalogDecorator` is the common base; `CachingCoverCatalog` and
-`FilteringCoverCatalog` are the concrete decorators. `RoutingCoverCatalog`
-(which selects a provider by media kind) is the component they can wrap.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class CoverService {
-  <<Client>>
-}
-class ICoverCatalog {
-  <<Component>>
-  +SearchAsync(query, kind, ct) Task
-}
-class RoutingCoverCatalog {
-  <<ConcreteComponent>>
-  -Dictionary byKind
-  -ICoverCatalog fallback
-  +SearchAsync(query, kind, ct) Task
-}
-class CoverCatalogDecorator {
-  <<Decorator>>
-  #ICoverCatalog Inner
-  +SearchAsync(query, kind, ct) Task*
-}
-class CachingCoverCatalog {
-  <<ConcreteDecorator>>
-  -ConcurrentDictionary cache
-  +SearchAsync(query, kind, ct) Task
-  +Clear()
-}
-class FilteringCoverCatalog {
-  <<ConcreteDecorator>>
-  +SearchAsync(query, kind, ct) Task
-}
-CoverService --> ICoverCatalog : uses
-ICoverCatalog <|.. RoutingCoverCatalog : implements
-ICoverCatalog <|.. CoverCatalogDecorator : implements
-CoverCatalogDecorator o--> ICoverCatalog : wraps
-CoverCatalogDecorator <|-- CachingCoverCatalog : extends
-CoverCatalogDecorator <|-- FilteringCoverCatalog : extends
-note for CoverCatalogDecorator "Any decorator can wrap any ICoverCatalog; order is a composition choice."
+    direction TB
+    class ICoverCatalog {
+        <<interface>>
+        +SearchAsync(query, kind)
+    }
+    class CoverCatalogDecorator {
+        <<abstract>>
+        #Inner ICoverCatalog
+        +SearchAsync(query, kind)*
+    }
+    class FilteringCoverCatalog {
+        +SearchAsync(query, kind)
+    }
+    class CachingCoverCatalog {
+        -_cache ConcurrentDictionary
+        +SearchAsync(query, kind)
+        +Clear()
+    }
+    class WikimediaCoverAdapter {
+        <<concrete component>>
+    }
+    class OpenLibraryCoverAdapter {
+        <<concrete component>>
+    }
+    class TvMazeCoverAdapter {
+        <<concrete component>>
+    }
+    class RoutingCoverCatalog {
+        -byKind IReadOnlyDictionary
+        -fallback ICoverCatalog
+        +SearchAsync(query, kind)
+    }
+    ICoverCatalog <|.. CoverCatalogDecorator
+    CoverCatalogDecorator o-- ICoverCatalog : wraps
+    CoverCatalogDecorator <|-- FilteringCoverCatalog
+    CoverCatalogDecorator <|-- CachingCoverCatalog
+    ICoverCatalog <|.. WikimediaCoverAdapter
+    ICoverCatalog <|.. OpenLibraryCoverAdapter
+    ICoverCatalog <|.. TvMazeCoverAdapter
+    ICoverCatalog <|.. RoutingCoverCatalog
+    RoutingCoverCatalog o-- ICoverCatalog : routes to
 ```
 
 ### Code where the pattern is visible
 
-[`Lab2/Core/CoverSearch/Decorators/FilteringCoverCatalog.cs`](../Lab2/Core/CoverSearch/Decorators/FilteringCoverCatalog.cs)
+[`Lab2/Core/CoverSearch/Decorators/CachingCoverCatalog.cs`](Lab2/Core/CoverSearch/Decorators/CachingCoverCatalog.cs):
 
 ```csharp
-public override async Task<IReadOnlyList<CoverCandidate>> SearchAsync(
-    string query, MediaKind kind, CancellationToken cancellationToken = default)
+public sealed class CachingCoverCatalog(ICoverCatalog inner) : CoverCatalogDecorator(inner)
 {
-    var hits = await Inner.SearchAsync(query, kind, cancellationToken);
-    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, IReadOnlyList<CoverCandidate>> _cache = new();
 
-    return hits
-        .Where(hit => !string.IsNullOrWhiteSpace(hit.Title))
-        .Where(hit => IsHttpUrl(hit.ImageUrl))
-        .Where(hit => !BlockedExtensions.Any(extension =>
-            Uri.TryCreate(hit.ImageUrl, UriKind.Absolute, out var uri) &&
-            uri.AbsolutePath.EndsWith(extension, StringComparison.OrdinalIgnoreCase)))
-        .Where(hit => seen.Add(hit.ImageUrl))
-        .Take(20)
-        .ToArray();
+    public override async Task<IReadOnlyList<CoverCandidate>> SearchAsync(
+        string query, MediaKind kind, CancellationToken cancellationToken = default)
+    {
+        var key = $"{kind}:{query.Trim().ToLowerInvariant()}";
+        if (_cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var hits = await Inner.SearchAsync(query, kind, cancellationToken);
+        if (hits.Count > 0)
+        {
+            _cache[key] = hits;
+        }
+
+        return hits;
+    }
 }
 ```
 
-The decorator calls the wrapped catalog and adds behavior before returning.
-The caching decorator does the same with a key of kind + normalized query. The
-composition in `Lab2Composition` is:
+The decorator has the same interface as what it wraps, so `FilteringCoverCatalog(CachingCoverCatalog(...))` and the reverse order both work. The factory picks `Filtering -> Caching -> Routing -> Adapter`. The filter sits outside the cache, so the cache stores raw provider hits.
 
-```csharp
-ICoverCatalog catalog = new FilteringCoverCatalog(new CachingCoverCatalog(routing));
-```
-
-Stacking them in the other order is also valid; both still implement
-`ICoverCatalog`.
+Adding a new variant (for example a rate limiter) means one new class that derives from `CoverCatalogDecorator`. No existing class changes.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `Caching_decorator_avoids_a_second_provider_call` | The second identical search returns the cached result; the inner catalog is called once. |
-| `Filtering_decorator_removes_invalid_duplicate_and_svg_hits` | Bad schemes, relative URLs, empty titles, duplicate image URLs and blocked formats are removed. |
-| `Decorators_can_be_stacked_in_either_order` | Filtering/caching in both orders produce the same usable result. |
+- `Caching_decorator_avoids_a_second_provider_call`: the second identical search does not reach the inner catalog.
+- `Filtering_decorator_removes_invalid_duplicate_and_svg_hits`: blank titles, non-HTTP links, SVG hits and duplicate URLs are removed.
+- `Decorators_can_be_stacked_in_either_order`: both orders give the same result.
 
 ## 5. Proxy
 
 ### Intent and the real problem
 
-Downloading a cover is slow and must not happen twice. The UI wants to say
-`ICoverImage.GetAsync()`, but the app needs a local cache, a size limit, a
-content check and protection against two concurrent card renders downloading
-the same file.
+Saving a cover downloads a file from the internet. Before downloading, the app must check whether the file is already in the vault, reject oversized or non-image payloads, and avoid two parallel downloads of the same cover. A **proxy** keeps the `ICoverImage` contract and does those checks before it reaches the real subject, so the caller cannot skip them.
 
-`RemoteCoverImage` is the real subject. `CachedCoverImageProxy` has the same
-interface, owns the local file and delegates only on a miss. `CoverService`
-creates the proxy; the client never downloads directly.
+### Class diagram
 
 ```mermaid
 classDiagram
-direction TB
-class CoverService {
-  <<Client>>
-  -ICoverCatalog catalog
-  -HttpClient httpClient
-  -string coversDirectory
-  +SearchAsync(query, kind, ct) Task
-  +SaveAsync(entryId, candidate, ct) Task
-}
-class ICoverImage {
-  <<Subject>>
-  +GetAsync(ct) Task
-}
-class CoverImageData {
-  <<DTO>>
-  +byte[] Bytes
-  +string ContentType
-  +string Source
-}
-class RemoteCoverImage {
-  <<RealSubject>>
-  -HttpClient httpClient
-  -string imageUrl
-  +GetAsync(ct) Task
-}
-class CachedCoverImageProxy {
-  <<Proxy>>
-  -ICoverImage inner
-  -string cachePath
-  -SemaphoreSlim gate
-  +GetAsync(ct) Task
-}
-CoverService --> ICoverImage : uses
-ICoverImage <|.. RemoteCoverImage : implements
-ICoverImage <|.. CachedCoverImageProxy : implements
-CachedCoverImageProxy --> ICoverImage : delegates on a miss
-CoverService ..> CachedCoverImageProxy : creates
-CoverService ..> RemoteCoverImage : injects into proxy
-note for CachedCoverImageProxy "A cache hit returns the local file; a miss delegates to the real subject once."
+    direction TB
+    class ICoverImage {
+        <<interface subject>>
+        +GetAsync(ct) CoverImageData
+    }
+    class RemoteCoverImage {
+        <<real subject>>
+        -httpClient HttpClient
+        -imageUrl string
+        +MaxBytes$ long
+        +GetAsync(ct) CoverImageData
+    }
+    class CachedCoverImageProxy {
+        <<proxy>>
+        -inner ICoverImage
+        -cachePath string
+        -_gate SemaphoreSlim
+        +GetAsync(ct) CoverImageData
+        +CachePath string
+    }
+    class CoverService {
+        +SaveAsync(entryId, candidate) CoverDownload
+    }
+    ICoverImage <|.. RemoteCoverImage
+    ICoverImage <|.. CachedCoverImageProxy
+    CachedCoverImageProxy o-- ICoverImage : protects
+    CoverService ..> CachedCoverImageProxy : creates per save
 ```
 
 ### Code where the pattern is visible
 
-[`Lab2/Core/CoverSearch/Images/CachedCoverImageProxy.cs`](../Lab2/Core/CoverSearch/Images/CachedCoverImageProxy.cs)
+[`Lab2/Core/CoverSearch/Images/CachedCoverImageProxy.cs`](Lab2/Core/CoverSearch/Images/CachedCoverImageProxy.cs), abridged:
 
 ```csharp
-public async Task<CoverImageData> GetAsync(CancellationToken cancellationToken = default)
+public sealed class CachedCoverImageProxy(
+    ICoverImage inner,
+    string cachePath,
+    long maxBytes = RemoteCoverImage.MaxBytes) : ICoverImage
 {
-    await _gate.WaitAsync(cancellationToken);
-    try
+    private readonly SemaphoreSlim _gate = new(1, 1);
+
+    public async Task<CoverImageData> GetAsync(CancellationToken cancellationToken = default)
     {
-        if (File.Exists(cachePath))
+        await _gate.WaitAsync(cancellationToken);
+        try
         {
-            var cached = await File.ReadAllBytesAsync(cachePath, cancellationToken);
-            if (cached.Length > 0 && cached.Length <= maxBytes)
+            if (File.Exists(cachePath))
             {
-                return new CoverImageData(
-                    cached, CoverImageTypes.ContentTypeForPath(cachePath), cachePath);
+                var cached = await File.ReadAllBytesAsync(cachePath, cancellationToken);
+                if (cached.Length > 0 && cached.Length <= maxBytes)
+                {
+                    return new CoverImageData(cached, CoverImageTypes.ContentTypeForPath(cachePath), cachePath);
+                }
+                File.Delete(cachePath);
             }
 
-            File.Delete(cachePath);
+            var downloaded = await inner.GetAsync(cancellationToken);
+            // size and image-signature checks, then write to a temp file and move it into place
+            ...
         }
-
-        var downloaded = await inner.GetAsync(cancellationToken);
-        if (downloaded.Bytes.Length == 0 || downloaded.Bytes.Length > maxBytes)
+        finally
         {
-            throw new CoverImageException("The downloaded cover has an invalid size.");
+            _gate.Release();
         }
-
-        // ... validate bytes, write temp file, atomically move to cachePath ...
-        return new CoverImageData(downloaded.Bytes, downloaded.ContentType, cachePath);
-    }
-    finally
-    {
-        _gate.Release();
     }
 }
 ```
 
-The proxy keeps `ICoverImage` unchanged, enforces a 12 MB limit, recognises
-real image signatures, and serializes concurrent requests for one file. A
-second selection of the same cover reads the file instead of downloading it
-again. `CoverService` saves the provider thumbnail locally (the original URL
-stays in `coverSource`), which keeps the vault small.
+The proxy checks the cache before the download, validates size and content, and serialises concurrent requests for the same cover. `CoverService.SaveAsync` always goes through the proxy, so a second selection is instant.
 
 ### Tests
 
-| Test | What it proves |
-|---|---|
-| `Proxy_downloads_once_then_serves_the_cached_file` | The first call downloads and writes; the second reads the cache; the real subject is called once. |
-| `Proxy_rejects_a_payload_that_is_not_an_image` | Non-image bytes are rejected and no cache file is left behind. |
-| `Proxy_serializes_concurrent_requests_for_the_same_cover` | Two simultaneous requests result in one download. |
-| `Cover_service_uses_the_proxy_cache_for_a_second_save` | The service path uses the proxy cache. |
-| `Cover_service_downloads_the_provider_thumbnail_for_the_local_card` | The local card uses the thumbnail URL, not the huge original. |
+- `Proxy_downloads_once_then_serves_the_cached_file`: the subject is called once across two requests.
+- `Proxy_rejects_a_payload_that_is_not_an_image`: a non-image payload is refused and nothing is written.
+- `Proxy_serializes_concurrent_requests_for_the_same_cover`: two concurrent requests produce one download.
+- `Cover_service_uses_the_proxy_cache_for_a_second_save`: the second save reads the cached file.
 
 ## 6. How the patterns interact
 
-The cover workflow is one execution path through Adapter, Decorator and Proxy:
+The sheet requires at least one execution path through two or more patterns. In this project, the **search** path and the **save** path both cross patterns:
 
 ```text
-MainPage
-  -> ICoverCatalog (FilteringCoverCatalog)      Decorator
-  -> ICoverCatalog (CachingCoverCatalog)        Decorator
-  -> RoutingCoverCatalog
-  -> WikimediaCoverAdapter                      Adapter
-  -> WikimediaCommonsClient -> public API
-  -> CoverService
-  -> ICoverImage (CachedCoverImageProxy)        Proxy
-  -> ICoverImage (RemoteCoverImage)             real subject
-  -> covers/<id>.jpg
+Search (user types "The Matrix poster")
+  client → CoverService.SearchAsync            (use-case object; a Facade-like entry point)
+    → FilteringCoverCatalog                    (Decorator)
+      → CachingCoverCatalog                    (Decorator)
+        → RoutingCoverCatalog                  (routes Film → Wikimedia)
+          → WikimediaCoverAdapter              (Adapter)
+            → WikimediaCommonsClient           (adaptee, public API)
+
+Save (user picks a result)
+  client → CoverService.SaveAsync
+    → CachedCoverImageProxy                    (Proxy: cache check, size and signature checks)
+      → RemoteCoverImage                       (real subject, HTTP download)
 ```
 
-The **Patterns** page shows the same chain. This is not three isolated demos:
-the normal Cover flow goes through all three patterns and then writes the
-result into the Markdown entry.
-
-`CoverServiceFactory` builds this chain, and two tests check the assembled
-pipeline rather than each class alone:
-
-| Test | What it proves |
-|---|---|
-| `Factory_pipeline_routes_by_kind_filters_and_caches` | An anime search is routed to the TVmaze adapter, the duplicate image is filtered out, and the repeated search is answered from the cache (one HTTP call). |
-| `Factory_pipeline_falls_back_to_wikimedia_when_the_book_source_is_empty` | When Open Library returns nothing for a book, routing falls back to the Wikimedia adapter. |
+The client calls `ICoverCatalog.SearchAsync` and `ICoverImage.GetAsync`. It never names an adapter, decorator or proxy. `CoverService` is a use-case object. It is not a full Facade, because it does not hide the vault or the UI, and this report does not claim it is.
 
 ## 7. Reuse from Lab 1
 
-- **Builder:** `MediaItemBuilder` assembles a valid entry (title, kind,
-  category, tags, status, cover, source, timestamps) step by step.
-- **Factory Method:** `WatchlistStoreFactory` declares creation of the store;
-  `MarkdownWatchlistStoreFactory` supplies the Markdown implementation.
-  Changing storage is a new factory, not an edit in the client.
-
-`CoverServiceFactory` follows the same idea for the structural pipeline: the
-client asks for a `CoverService` and the factory decides which adapters and
-decorators exist and in which order. The client depends on abstractions only.
+`MediaItemBuilder` is the Lab 1 Builder. It assembles a valid `MediaItem` step by step (title, kind, category, tags, status, cover path and source). The structural pipeline creates entries through this builder, so no pattern code constructs `MediaItem` objects directly.
 
 ## 8. Runnable demo
 
-The app runs as an Android APK. Verified run on `Medium_Phone_API_37`
-(26 Nov 2026):
+The sheet asks for a runnable demo with readable output, and says that a GUI gives no extra points. This project's client is an Android app. It was run on the `Medium_Phone_API_37` emulator:
 
-1. Added “The Matrix”.
+1. Added "The Matrix".
 2. Opened **Cover**, searched for `The Matrix poster`.
-3. The request passed through `FilteringCoverCatalog` → `CachingCoverCatalog`
-   → `RoutingCoverCatalog` → `WikimediaCoverAdapter` and returned provider hits.
-4. Selected a result; `CachedCoverImageProxy` downloaded and stored
-   `covers/0001.png`.
-5. The card reloaded with the cover, `Planned` status, category and tags.
+3. The request passed through the Filtering → Caching → Routing → Wikimedia Adapter chain and returned provider hits.
+4. Selected a result. `CachedCoverImageProxy` downloaded and stored `covers/0001.png`.
+5. The card reloaded with the cover, status and category.
 
-![Lab 2 running on Android](../docs/lab2-screen.png)
+![Lab 2 running on Android](docs/lab2-screen.png)
 
-The **Patterns** page prints the same route for the user:
+The cover search result list, from the Cover page (Wikimedia results for "The Matrix poster"):
 
-![Lab 2 Patterns page](../docs/lab2-patterns.png)
+![Lab 2 cover search results](docs/lab2-cover.png)
 
-The entry file is still ordinary Markdown; the selected cover is a normal image
-in the app-private vault:
+The **Patterns** page prints the route each pattern takes, so the interaction can be read on the device:
+
+![Lab 2 Patterns page](docs/lab2-patterns.png)
+
+The vault stays plain Markdown plus image files:
 
 ```text
-/data/user/0/com.tmps.lab2.watchlist/files/library/
+files/library/
   entries/0001-the-matrix.md
   covers/0001.png
 ```
 
-## 9. Tests and evidence
+**Gap:** the sheet's "readable console output" is not met by the current repository. The console demo was removed when the client moved to Android. A console runner in `Lab2/Core` can be added if the sheet is strict about it.
 
-Command:
+## 9. Patterns not implemented
+
+- **Bridge.** Would separate the cover search abstraction (`ICoverCatalog`) from its implementation, so that search by kind and search by provider could vary independently. Not needed here, because routing already selects the provider.
+- **Composite.** Would let a group of catalogs (for example, "all providers") be used through `ICoverCatalog` like one catalog. A fan-out catalog could do this. The current design only routes, so there is no tree to model.
+- **Facade.** A single simple interface over a complex subsystem. `CoverService` plus `CoverServiceFactory` come close, but they do not hide the storage layer or the UI, so the report does not claim the full pattern.
+- **Flyweight.** Would share immutable data between many objects, such as the same `CoverCandidate` values across many cached searches. The cache holds lists, not shared items, so the pattern is not present.
+
+## 10. Tests and evidence
+
+Command (run from the repository root):
 
 ```powershell
-dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
+dotnet test Tests/Watchlist.Tests/Watchlist.Tests.csproj
 ```
 
-Result from the verified run:
+Result on this repository: `Passed! - Failed: 0, Passed: 55, Skipped: 0, Total: 55`. The cover-pattern tests are in `Tests/Watchlist.Tests/CoverPatternTests.cs`: Adapter (2), Decorator (3), Proxy (4), and the factory pipeline (2).
 
-```text
-Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 115 ms
-```
+## 11. Requirements checklist
 
-The 55 tests include the Markdown vault (codec, unknown keys, custom kinds,
-malformed files, index, repository, migration), the three cover patterns, the
-assembled factory pipeline and the Lab 3 behavioral and import tests in the
-same test project. Test
-names are listed in sections 3–6 for the structural patterns; the project
-compiles with:
-
-```text
-Watchlist.Core -> ...\Watchlist.Core.dll
-Lab2 -> ...\Lab2.dll
-Build succeeded. 0 Warning(s) 0 Error(s)
-```
-
-The Android client also publishes a signed APK through the release workflow.
-The verified Release APK is 27.5 MB and passes `apksigner` v2/v3 verification:
-`Lab2/App/bin/Release/net10.0-android/com.tmps.lab2.watchlist-Signed.apk`.
-
-## 10. Requirements checklist
-
-| Requirement | Where it is met |
+| Requirement | Status |
 |---|---|
-| At least 3 structural patterns | Adapter (§3), Decorator (§4), Proxy (§5) |
-| Patterns perform real tasks of the system | The Cover flow finds, filters, caches and saves a cover through all three (§6) |
-| Creation buried inside the functionalities | `MarkdownWatchlistStoreFactory`, `CoverServiceFactory` and `MediaItemBuilder` live in Core; the client only receives a `CoverService` and a repository (§2, §7) |
-| One client for the whole system | `Lab2/App` is the only client of Lab 2 |
-| Modules separated by responsibility | `Domain`, `Storage`, `CoverSearch` (`Providers`, `Adapters`, `Decorators`, `Images`) and `App` (§2) |
-| Git hosting, README and report | This repository, `Lab2/README.md` and this report |
+| At least 3 structural patterns, full structure | Adapter, Decorator (abstract base + 2 concrete), Proxy |
+| Patterns interact (one path through 2+ patterns) | Yes, §6 search and save paths |
+| Client code depends on abstractions | Yes, `ICoverCatalog`, `ICoverImage` |
+| Open for extension | Yes, a new decorator or adapter needs new classes only |
+| Build on Lab 1 | Yes, `MediaItemBuilder` (Builder) |
+| Clean project structure | Yes, §2 |
+| Runnable demo with readable console output | Partial: Android demo with screenshots; console runner removed (see §8) |
+| Adapt a library you cannot change | Yes, Wikimedia, Open Library and TVmaze public APIs |
+| 2+ unit tests per pattern | Yes, §3–§5 and §10 |
+| UML class diagram per pattern | Yes, §3–§5 (Mermaid) |
+| Code snippet per pattern with explanation | Yes, §3–§5 |
+| Common mistakes avoided | Adapter adapts a foreign API; Decorator wraps the same interface; Proxy keeps the same interface; no `instanceof` checks on the client side |
 
-## 11. Conclusions
+## 12. Conclusions
 
-The hard part was not the pattern structure but the trust boundary around a
-human-editable vault. The codec had to round-trip quotes, commas, Unicode,
-unknown keys and notes without losing data; the tests now pin those cases. The
-Markdown storage also made the Adapter/Decorator/Proxy path easy to demonstrate
-because a selected cover is immediately a normal file the user can inspect.
-
-I would change two things next. First, a real film provider with an API key
-(TMDB/OMDb) would produce better posters than Wikimedia's file search; the
-current Adapter interface makes that a new adapter only. Second, the app
-downloads the provider thumbnail but does not offer a choice between thumbnail
-and original; a quality selector would be a small addition to `CoverService`.
+- The hardest part was the decorator order. The filter must sit outside the cache, otherwise the cache stores unfiltered hits and the filter cannot be changed without clearing the cache.
+- The Adapter was the easiest pattern to justify, because the three public APIs have three different response shapes.
+- If I were designing it again, I would write the console runner from the start. An Android-only demo hides the pattern route, and the sheet asks for readable output.
+- A `CoverService` that is a true Facade (hiding both the vault and the cover pipeline) would make the use-case clearer. That is out of scope for this lab.
