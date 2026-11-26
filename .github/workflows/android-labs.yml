@@ -1,4 +1,4 @@
-name: Lab 3 Android APK
+name: Labs 2 and 3 Android APKs
 
 on:
   push:
@@ -29,7 +29,15 @@ jobs:
       - name: Install MAUI Android workload
         run: dotnet workload install maui-android
 
-      - name: Build Android APK
+      - name: Build Lab 2 APK
+        run: >
+          dotnet publish Lab2/App/Lab2.csproj
+          -c Release
+          -f net10.0-android
+          -p:AndroidKeyStore=false
+          -o "${{ github.workspace }}/lab2-apk"
+
+      - name: Build Lab 3 APK
         run: >
           dotnet publish Lab3/App/Lab3.csproj
           -c Release
@@ -37,9 +45,11 @@ jobs:
           -p:AndroidKeyStore=false
           -o "${{ github.workspace }}/lab3-apk"
 
-      - name: Upload APK artifact
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Lab3-android-apk
-          path: lab3-apk/**/*.apk
+          name: Labs-2-3-android-apks
+          path: |
+            lab2-apk/**/*.apk
+            lab3-apk/**/*.apk
           if-no-files-found: error

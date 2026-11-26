@@ -2,9 +2,45 @@
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 10 console  
+**Technology:** C# / .NET 10 MAUI (Android)  
 **Year:** 2026  
 **Instructor:** Istrati Daniel
+
+---
+
+## Objectives
+
+1. Study and understand the Structural Design Patterns.
+2. As a continuation of the previous laboratory work, think about the
+   functionalities that the system will need to provide to the user.
+3. Implement some additional functionalities, or create a new project, using
+   structural design patterns.
+
+## Main tasks
+
+By extending the project, implement at least 3 structural design patterns:
+
+- the implemented patterns should help perform the tasks the system offers;
+- the object creation mechanisms/patterns can now be buried inside the
+  functionalities instead of being used in the client;
+- there should be only one client for the whole system.
+
+## Theory
+
+Structural patterns describe how classes and objects are composed into larger
+structures while keeping those structures flexible. Class-level structural
+patterns rely on inheritance; object-level ones rely on composition, which can
+be rearranged at runtime. The common ones are Adapter, Bridge, Composite,
+Decorator, Facade, Flyweight and Proxy.
+
+This lab uses three of them, all on the same cover workflow:
+
+- **Adapter** converts an interface the project does not own into the one the
+  client expects.
+- **Decorator** wraps an object in another object with the same interface to
+  add behavior without changing the original class.
+- **Proxy** stands in for an expensive or remote object with the same
+  interface and controls access to it (caching, validation, lazy loading).
 
 ---
 
@@ -71,20 +107,52 @@ Lab2/
 │       ├── ICoverCatalog.cs        target interface
 │       ├── RoutingCoverCatalog.cs
 │       ├── CoverService.cs
+│       ├── CoverServiceFactory.cs  assembles the pipeline
 │       ├── Providers/              third-party API clients
 │       ├── Adapters/               Adapter pattern
 │       ├── Decorators/             Decorator pattern
 │       └── Images/                 Proxy pattern
-└── Console/                        Lab 2 client
-    ├── Program.cs
-    ├── Lab2Composition.cs
-    └── ConsoleApp.cs
+└── App/                            Lab 2 MAUI client
+    ├── MainPage.xaml(.cs)           cards, stats, actions
+    ├── EditPage.xaml(.cs)           metadata form
+    ├── CoverPickerPage.xaml(.cs)    provider search + download
+    ├── PatternsPage.xaml(.cs)       structural chain in the UI
+    └── AppServices.cs               client composition root
 ```
 
-The console client depends on `ICoverCatalog`, `ICoverImage`, `CoverService`,
-`IWatchlistStore` and `WatchlistRepository`; it never constructs a provider or
-a file format itself. `Lab2Composition` is the only place that names concrete
-classes.
+The MAUI client depends on `CoverService`, `IWatchlistStore` and
+`WatchlistRepository`; it never constructs a provider, adapter, decorator or
+file format itself. Object creation is buried in Core, as the task asks:
+
+- `MarkdownWatchlistStoreFactory` (Factory Method) creates the store;
+- `CoverServiceFactory` builds the provider clients, the three adapters, the
+  routing table and the decorator chain, and returns a ready `CoverService`.
+
+`AppServices` is a few lines that call those two factories, and Lab 3 calls
+the same `CoverServiceFactory`, so the pipeline is defined once.
+
+```csharp
+public static ICoverCatalog CreateCatalog(HttpClient http)
+{
+    var wikimedia = new WikimediaCoverAdapter(new WikimediaCommonsClient(http));
+    var openLibrary = new OpenLibraryCoverAdapter(new OpenLibraryClient(http));
+    var tvMaze = new TvMazeCoverAdapter(new TvMazeClient(http));
+
+    var routing = new RoutingCoverCatalog(
+        new Dictionary<MediaKind, ICoverCatalog>
+        {
+            [MediaKind.Book] = openLibrary,
+            [MediaKind.Manga] = openLibrary,
+            [MediaKind.Series] = tvMaze,
+            [MediaKind.Anime] = tvMaze,
+            [MediaKind.Film] = wikimedia,
+            [MediaKind.Game] = wikimedia,
+        },
+        wikimedia);
+
+    return new FilteringCoverCatalog(new CachingCoverCatalog(routing));
+}
+```
 
 ## 3. Adapter
 
@@ -118,7 +186,7 @@ means adding a client and an adapter only.
 ```mermaid
 classDiagram
 direction TB
-class ConsoleApp {
+class MainPage {
   <<Client>>
 }
 class CoverService {
@@ -164,7 +232,7 @@ class RoutingCoverCatalog {
   -ICoverCatalog fallback
   +SearchAsync(query, kind, ct) Task
 }
-ConsoleApp --> CoverService : uses
+MainPage --> CoverService : uses
 CoverService --> ICoverCatalog : target
 ICoverCatalog <|.. WikimediaCoverAdapter : implements
 ICoverCatalog <|.. OpenLibraryCoverAdapter : implements
@@ -424,7 +492,7 @@ stays in `coverSource`), which keeps the vault small.
 The cover workflow is one execution path through Adapter, Decorator and Proxy:
 
 ```text
-ConsoleApp
+MainPage
   -> ICoverCatalog (FilteringCoverCatalog)      Decorator
   -> ICoverCatalog (CachingCoverCatalog)        Decorator
   -> RoutingCoverCatalog
@@ -436,9 +504,17 @@ ConsoleApp
   -> covers/<id>.jpg
 ```
 
-The console's `patterns` command prints the same chain. This is not three
-isolated demos in `main()`: the normal `search` command goes through all three
-patterns and then writes the result into the Markdown entry.
+The **Patterns** page shows the same chain. This is not three isolated demos:
+the normal Cover flow goes through all three patterns and then writes the
+result into the Markdown entry.
+
+`CoverServiceFactory` builds this chain, and two tests check the assembled
+pipeline rather than each class alone:
+
+| Test | What it proves |
+|---|---|
+| `Factory_pipeline_routes_by_kind_filters_and_caches` | An anime search is routed to the TVmaze adapter, the duplicate image is filtered out, and the repeated search is answered from the cache (one HTTP call). |
+| `Factory_pipeline_falls_back_to_wikimedia_when_the_book_source_is_empty` | When Open Library returns nothing for a book, routing falls back to the Wikimedia adapter. |
 
 ## 7. Reuse from Lab 1
 
@@ -446,51 +522,39 @@ patterns and then writes the result into the Markdown entry.
   category, tags, status, cover, source, timestamps) step by step.
 - **Factory Method:** `WatchlistStoreFactory` declares creation of the store;
   `MarkdownWatchlistStoreFactory` supplies the Markdown implementation.
-  Changing storage is a new factory, not an edit in the console.
+  Changing storage is a new factory, not an edit in the client.
 
-The console composition root selects the factory and the decorated catalog;
-the client depends on abstractions.
+`CoverServiceFactory` follows the same idea for the structural pipeline: the
+client asks for a `CoverService` and the factory decides which adapters and
+decorators exist and in which order. The client depends on abstractions only.
 
 ## 8. Runnable demo
 
-The full transcript is reproducible with `dotnet run --project
-.\Lab2\Console\Lab2.csproj`, a temporary `TMPS_LAB2_LIBRARY`, and the commands
-from `Lab2/README.md`. Excerpt from the verified run:
+The app runs as an Android APK. Verified run on `Medium_Phone_API_37`
+(26 Nov 2026):
+
+1. Added “The Matrix”.
+2. Opened **Cover**, searched for `The Matrix poster`.
+3. The request passed through `FilteringCoverCatalog` → `CachingCoverCatalog`
+   → `RoutingCoverCatalog` → `WikimediaCoverAdapter` and returned provider hits.
+4. Selected a result; `CachedCoverImageProxy` downloaded and stored
+   `covers/0001.png`.
+5. The card reloaded with the cover, `Planned` status, category and tags.
+
+![Lab 2 running on Android](../docs/lab2-screen.png)
+
+The **Patterns** page prints the same route for the user:
+
+![Lab 2 Patterns page](../docs/lab2-patterns.png)
+
+The entry file is still ordinary Markdown; the selected cover is a normal image
+in the app-private vault:
 
 ```text
-Consumed Media Watchlist — Lab 2 (structural patterns)
-Vault: C:\Users\...\tmps-lab2-final-demo
-The library is plain Markdown; open index.md without this app.
-
-watchlist> list
-ID   Status           Title                              Kind     Category         Cover Tags
-1    rated 9/10       The Matrix                         Film     Sci-Fi           -     action, classic
-2    planned          Dune                               Book     Sci-Fi           -     space opera
-
-watchlist> search
-Entry id: 1
-Search covers for [The Matrix]: The Matrix poster
-Searching through the decorated catalog...
-  [1] Expedition 24 Matrix crew poster
-      Wikimedia Commons · https://upload.wikimedia.org/...
-  ...
-Pick a cover number: 1
-Downloading through the image proxy...
-Saved covers/0001.jpg (63.2 KB).
-Local file: C:\Users\...\tmps-lab2-final-demo\covers\0001.jpg
+/data/user/0/com.tmps.lab2.watchlist/files/library/
+  entries/0001-the-matrix.md
+  covers/0001.png
 ```
-
-The vault after the run:
-
-```text
-index.md                          549 bytes
-entries/0001-the-matrix.md        452 bytes
-entries/0002-dune.md              201 bytes
-covers/0001.jpg                  ~63 KB
-```
-
-`index.md` groups entries by status and links each entry file; `0001-the-matrix.md`
-contains the frontmatter and the notes body shown above.
 
 ## 9. Tests and evidence
 
@@ -503,13 +567,15 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Result from the verified run:
 
 ```text
-Passed!  - Failed:     0, Passed:    49, Skipped:     0, Total:    49, Duration: 110 ms
+Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 115 ms
 ```
 
-The 49 tests include the Markdown vault (codec, unknown keys, malformed files,
-index, repository, migration), the three cover patterns and the Lab 3
-behavioral tests in the same test project. Test names are listed in section 3–5 for the structural
-patterns; the project compiles with:
+The 55 tests include the Markdown vault (codec, unknown keys, custom kinds,
+malformed files, index, repository, migration), the three cover patterns, the
+assembled factory pipeline and the Lab 3 behavioral and import tests in the
+same test project. Test
+names are listed in sections 3–6 for the structural patterns; the project
+compiles with:
 
 ```text
 Watchlist.Core -> ...\Watchlist.Core.dll
@@ -517,7 +583,22 @@ Lab2 -> ...\Lab2.dll
 Build succeeded. 0 Warning(s) 0 Error(s)
 ```
 
-## 10. Conclusions
+The Android client also publishes a signed APK through the release workflow.
+The verified Release APK is 27.5 MB and passes `apksigner` v2/v3 verification:
+`Lab2/App/bin/Release/net10.0-android/com.tmps.lab2.watchlist-Signed.apk`.
+
+## 10. Requirements checklist
+
+| Requirement | Where it is met |
+|---|---|
+| At least 3 structural patterns | Adapter (§3), Decorator (§4), Proxy (§5) |
+| Patterns perform real tasks of the system | The Cover flow finds, filters, caches and saves a cover through all three (§6) |
+| Creation buried inside the functionalities | `MarkdownWatchlistStoreFactory`, `CoverServiceFactory` and `MediaItemBuilder` live in Core; the client only receives a `CoverService` and a repository (§2, §7) |
+| One client for the whole system | `Lab2/App` is the only client of Lab 2 |
+| Modules separated by responsibility | `Domain`, `Storage`, `CoverSearch` (`Providers`, `Adapters`, `Decorators`, `Images`) and `App` (§2) |
+| Git hosting, README and report | This repository, `Lab2/README.md` and this report |
+
+## 11. Conclusions
 
 The hard part was not the pattern structure but the trust boundary around a
 human-editable vault. The codec had to round-trip quotes, commas, Unicode,
@@ -527,6 +608,6 @@ because a selected cover is immediately a normal file the user can inspect.
 
 I would change two things next. First, a real film provider with an API key
 (TMDB/OMDb) would produce better posters than Wikimedia's file search; the
-current Adapter interface makes that a new adapter only. Second, the console
+current Adapter interface makes that a new adapter only. Second, the app
 downloads the provider thumbnail but does not offer a choice between thumbnail
 and original; a quality selector would be a small addition to `CoverService`.

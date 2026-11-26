@@ -9,7 +9,7 @@ public partial class ImportPage : ContentPage
 {
     private readonly AppServices _services;
     private ImportPreview? _preview;
-    private string? _malXml;
+    private string? _fileText;
 
     public ImportPage(AppServices services)
     {
@@ -17,6 +17,7 @@ public partial class ImportPage : ContentPage
         _services = services;
         SourcePicker.ItemsSource = _services.Importers.Select(importer => importer.Name).ToList();
         SourcePicker.SelectedIndex = 0;
+        UpdateSourcePanels();
         StatusLabel.Text = "Choose a source and preview before importing.";
     }
 
@@ -24,12 +25,29 @@ public partial class ImportPage : ContentPage
 
     private void OnSourceChanged(object sender, EventArgs e)
     {
-        var aniList = SourcePicker.SelectedItem as string == "AniList";
-        AniListPanel.IsVisible = aniList;
-        MalPanel.IsVisible = !aniList;
         _preview = null;
+        _fileText = null;
+        FileLabel.Text = "No file chosen.";
         ImportButton.IsEnabled = false;
         PreviewLabel.Text = "";
+        ImportProgressBar.IsVisible = false;
+        ProgressLabel.Text = "";
+        UpdateSourcePanels();
+    }
+
+    private void UpdateSourcePanels()
+    {
+        var source = SourcePicker.SelectedItem as string ?? "AniList";
+        var aniList = source == "AniList";
+        AniListPanel.IsVisible = aniList;
+        FilePanel.IsVisible = !aniList;
+        FilePromptLabel.Text = source == "MAL XML" ? "MAL export file" : "CSV export file";
+        ChooseFileButton.Text = source == "MAL XML" ? "Choose XML file" : "Choose CSV file";
+        StatusLabel.Text = aniList
+            ? "Enter a public AniList username."
+            : source == "MAL XML"
+                ? "Choose the XML from Profile → Export/Import in MAL."
+                : "Choose a CSV with at least a Title column.";
     }
 
     private async void OnChooseFileClicked(object sender, EventArgs e)
@@ -44,8 +62,8 @@ public partial class ImportPage : ContentPage
 
             await using var stream = await file.OpenReadAsync();
             using var reader = new StreamReader(stream, Encoding.UTF8);
-            _malXml = await reader.ReadToEndAsync();
-            FileLabel.Text = $"{file.FileName} ({_malXml.Length:N0} chars)";
+            _fileText = await reader.ReadToEndAsync();
+            FileLabel.Text = $"{file.FileName} ({_fileText.Length:N0} chars)";
             _preview = null;
             ImportButton.IsEnabled = false;
             PreviewLabel.Text = "";
@@ -61,16 +79,16 @@ public partial class ImportPage : ContentPage
         try
         {
             StatusLabel.Text = "Reading the external list...";
-            var sourceName = SourcePicker.SelectedItem as string;
+            var sourceName = SourcePicker.SelectedItem as string ?? "AniList";
             var importer = _services.Importers.First(importer => importer.Name == sourceName);
             var input = sourceName == "AniList"
                 ? UsernameEntry.Text?.Trim() ?? ""
-                : _malXml ?? "";
+                : _fileText ?? "";
             if (input.Length == 0)
             {
                 StatusLabel.Text = sourceName == "AniList"
                     ? "Enter a username."
-                    : "Choose a MAL XML file.";
+                    : "Choose a file.";
                 return;
             }
 
@@ -81,7 +99,7 @@ public partial class ImportPage : ContentPage
                 $"{_preview.NewItems.Count} new · {_preview.Duplicates.Count} duplicate(s)\n" +
                 string.Join("\n", _preview.NewItems.Take(8).Select(row => $"• {row.Title} ({row.Kind})")) +
                 (_preview.NewItems.Count > 8 ? $"\n…and {_preview.NewItems.Count - 8} more" : "");
-            StatusLabel.Text = "Preview ready. Import will add the new entries as one undoable command.";
+            StatusLabel.Text = "Preview ready. Import adds the new entries as one undoable command.";
         }
         catch (Exception ex) when (ex is ImportException or HttpRequestException or TaskCanceledException)
         {
@@ -97,18 +115,41 @@ public partial class ImportPage : ContentPage
             return;
         }
 
+        var nextId = _services.Editor.NextId;
+        var items = _services.Import.BuildItems(_preview, () => nextId++);
+        ImportButton.IsEnabled = false;
+        PreviewButton.IsEnabled = false;
+        ImportProgressBar.IsVisible = true;
+        ImportProgressBar.Progress = 0;
+        ProgressLabel.Text = $"Applying 0/{items.Count}...";
+
+        var progress = new Progress<ImportProgress>(item =>
+        {
+            ImportProgressBar.Progress = item.Total == 0 ? 0 : (double)item.Processed / item.Total;
+            ProgressLabel.Text = $"Applying {item.Processed}/{item.Total}: {item.Title}";
+        });
+
         try
         {
-            var nextId = _services.Editor.NextId;
-            var items = _services.Import.BuildItems(_preview, () => nextId++);
-            _services.Commands.Execute(new ImportMediaCommand(_services.Editor, items));
+            await Task.Run(() =>
+                _services.Commands.Execute(new ImportMediaCommand(_services.Editor, items, progress)));
+            ImportProgressBar.Progress = 1;
+            ProgressLabel.Text = $"Applied {items.Count} entries.";
+            StatusLabel.Text =
+                $"Imported {items.Count} entries; skipped {_preview.Duplicates.Count} duplicate(s).";
             Imported?.Invoke(items.Count);
-            await DisplayAlertAsync("Imported", $"{items.Count} entries were added. Undo can remove them.", "OK");
+            await DisplayAlertAsync(
+                "Import complete",
+                $"{items.Count} entries were added as one command. Undo can remove them.",
+                "OK");
             await Navigation.PopAsync();
         }
         catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or IOException)
         {
-            StatusLabel.Text = $"Import failed: {ex.Message}";
+            StatusLabel.Text = $"Import failed and was rolled back: {ex.Message}";
+            ProgressLabel.Text = "No entries were kept.";
+            ImportButton.IsEnabled = true;
+            PreviewButton.IsEnabled = true;
         }
     }
 }

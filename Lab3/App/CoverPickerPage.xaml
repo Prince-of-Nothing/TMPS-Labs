@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:Lab3"
              x:Class="Lab3.CoverPickerPage"
              Title="Cover search"
-             BackgroundColor="#F8F6F3">
+             BackgroundColor="{AppThemeBinding Light=#F8F6F3, Dark=#121016}">
 
     <Grid Padding="16,12" RowDefinitions="Auto,Auto,*" RowSpacing="10">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -12,26 +12,26 @@
             <Button Grid.Column="1" Text="Search" Clicked="OnSearchClicked" />
         </Grid>
 
-        <Label Grid.Row="1" x:Name="StatusLabel" FontSize="12" TextColor="#8A7F8C" />
+        <Label Grid.Row="1" x:Name="StatusLabel" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
 
         <CollectionView Grid.Row="2" x:Name="ResultsList" SelectionMode="None">
             <CollectionView.EmptyView>
                 <Label Text="Search for a cover to see results." FontSize="13"
-                       TextColor="#8A7F8C" HorizontalOptions="Center" Margin="0,24" />
+                       TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" HorizontalOptions="Center" Margin="0,24" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="local:CoverRow">
-                    <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
+                    <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
                             StrokeShape="RoundRectangle 14" Padding="10" Margin="0,4">
                         <Grid ColumnDefinitions="62,*,Auto" ColumnSpacing="10">
-                            <Border Grid.Column="0" BackgroundColor="#F1EDE7" StrokeThickness="0"
+                            <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#F1EDE7, Dark=#2A2632}" StrokeThickness="0"
                                     StrokeShape="RoundRectangle 8" HeightRequest="88" WidthRequest="62">
                                 <Image Source="{Binding Thumbnail}" Aspect="AspectFill" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
                                 <Label Text="{Binding Title}" FontSize="14" FontAttributes="Bold"
                                        LineBreakMode="TailTruncation" />
-                                <Label Text="{Binding Provider}" FontSize="11" TextColor="#8A7F8C" />
+                                <Label Text="{Binding Provider}" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
                             </VerticalStackLayout>
                             <Button Grid.Column="2" Text="Use" Clicked="OnUseClicked"
                                     CommandParameter="{Binding Candidate}" VerticalOptions="Center"

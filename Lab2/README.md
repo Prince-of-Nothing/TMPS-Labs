@@ -2,46 +2,29 @@
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 10 console  
+**Technology:** C# / .NET 10 MAUI (Android)  
 **Instructor:** Istrati Daniel
 
 ## What it is
 
-A local watchlist organizer. Entries are films, shows, books, games, anime or
-manga. Each entry can have a category, tags, progress, notes, status, rating
-and a cover found online and stored next to the library.
+A local watchlist organizer built as an Android app. Entries are films, shows,
+books, games, anime or manga. Each entry can have a category, tags, progress,
+notes, status, rating and a cover found online and stored next to the library.
 
-The library is a Markdown vault; the app is optional:
+The Markdown vault remains readable without the app:
 
 ```text
 library/
-  index.md                 generated overview
+  index.md
   entries/0001-the-matrix.md
-  covers/0001.jpg
+  covers/0001.png
 ```
 
-```md
----
-id: 1
-title: The Matrix
-kind: film
-category: Sci-Fi
-tags: [action, classic]
-status: rated
-rating: 9
-progress: 1/1
-cover: covers/0001.jpg
-coverSource: "https://..."
-created: 2026-11-24T...
-updated: 2026-11-24T...
----
-# The Matrix
+The app uses its private app-data folder by default:
+`FileSystem.AppDataDirectory/library`. Set `TMPS_LAB2_LIBRARY` to override it.
 
-Watched on a rainy night.
-```
-
-Unknown frontmatter keys and the notes body are preserved when the app saves.
-Malformed files are reported, not overwritten. Writes are atomic.
+The vault codec preserves unknown frontmatter keys and notes, reports malformed
+files instead of overwriting them, and writes atomically.
 
 ## Project layout
 
@@ -51,66 +34,75 @@ Lab2/
     Domain/                MediaItem, MediaKind, MediaStatus, MediaItemBuilder
     Storage/               MarkdownWatchlistStore, codec, index, repository
     CoverSearch/
+      CoverServiceFactory  assembles the whole cover pipeline
       Providers/           Wikimedia, Open Library, TVmaze clients
       Adapters/            provider DTOs -> CoverCandidate
       Decorators/          filtering + caching
       Images/              RemoteCoverImage, CachedCoverImageProxy
-  Console/                 Lab 2 client (composition + menu)
+  App/                     Lab 2 MAUI client
+    MainPage               cards, stats, add/edit/consume/rate/cover
+    EditPage               metadata form
+    CoverPickerPage        provider search + local cover download
+    PatternsPage           the structural chain explained in-app
+    AppServices.cs         client composition root
 ```
+
+`MainPage` and the other pages see only a `WatchlistRepository` and a
+`CoverService`. `AppServices` asks the Core factories for those objects; the
+provider clients, three adapters, routing table and decorator chain are never
+constructed in the UI.
 
 ## Structural patterns
 
 - **Adapter** — `ICoverCatalog` is the target. `WikimediaCoverAdapter`,
   `OpenLibraryCoverAdapter` and `TvMazeCoverAdapter` translate three unrelated
-  third-party response models into `CoverCandidate`. The adaptees are public
-  APIs the project does not own.
-- **Decorator** — `CoverCatalogDecorator` is the base; `CachingCoverCatalog`
-  skips repeated provider calls and `FilteringCoverCatalog` removes unusable,
-  duplicate and unsupported links. Both have the same `ICoverCatalog`
-  interface and can be stacked in either order.
-- **Proxy** — `CachedCoverImageProxy` implements `ICoverImage` like the real
-  `RemoteCoverImage`, checks the local file first, validates type and size, and
-  writes atomically. Concurrent requests for one cover share a single download.
+  public API response models into `CoverCandidate`.
+- **Decorator** — `CoverCatalogDecorator` is the base;
+  `CachingCoverCatalog` and `FilteringCoverCatalog` add behavior through the
+  same `ICoverCatalog` interface. They can be stacked in either order.
+- **Proxy** — `CachedCoverImageProxy` implements `ICoverImage` like
+  `RemoteCoverImage`, serves the local file first, validates type/size and
+  serializes concurrent downloads.
 - Reused from Lab 1: `MediaItemBuilder` (Builder) and
   `WatchlistStoreFactory` / `MarkdownWatchlistStoreFactory` (Factory Method).
 
-Cover search and download are the interacting execution path:
-
 ```text
-ConsoleApp
-  -> ICoverCatalog (FilteringCoverCatalog)
-  -> ICoverCatalog (CachingCoverCatalog)
-  -> RoutingCoverCatalog -> provider adapter -> public API
-  -> CoverService -> ICoverImage (CachedCoverImageProxy)
-  -> ICoverImage (RemoteCoverImage) -> covers/<id>.jpg
+MainPage -> CoverService
+  -> FilteringCoverCatalog   Decorator
+  -> CachingCoverCatalog     Decorator
+  -> RoutingCoverCatalog
+  -> provider CoverAdapter   Adapter
+  -> public provider API
+  -> CachedCoverImageProxy   Proxy
+  -> covers/<id>.png
 ```
 
-`patterns` in the console prints this chain.
+The **Patterns** button opens the same chain in the app.
 
-## Run it
+## Build and run
+
+Requirements: .NET 10 SDK, MAUI Android workload, JDK 21 and the Android SDK.
 
 ```powershell
-dotnet run --project .\Lab2\Console\Lab2.csproj
+dotnet workload install maui-android
+$env:JAVA_HOME = "C:\path\to\jdk-21"
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+dotnet build .\Lab2\App\Lab2.csproj -f net10.0-android
 ```
 
-The default vault is `%LOCALAPPDATA%\TMPS-Labs\Lab2\library`. Set
-`TMPS_LAB2_LIBRARY` to use another folder (the demo transcript used a temp
-folder).
+APK output:
+`Lab2/App/bin/Debug/net10.0-android/com.tmps.lab2.watchlist-Signed.apk`.
 
-Commands: `list`, `show`, `add`, `edit`, `consume`, `rate`, `reopen`, `delete`,
-`search`, `cover`, `reload`, `patterns`, `help`, `quit`.
+## Using it
 
-```text
-watchlist> add
-Title: The Matrix
-...
-watchlist> search
-Entry id: 1
-Search covers for [The Matrix]: The Matrix poster
-  [1] ...
-Pick a cover number: 1
-Saved covers/0001.jpg (63.2 KB).
-```
+- **Add** creates an entry; blank category becomes `Uncategorized`.
+- **Consume** moves a planned entry to consumed.
+- **Rate** (1–10) is available after consuming.
+- **Reopen** returns an entry to planned.
+- **Cover** searches the provider selected by the entry kind, then downloads
+  the chosen image through the cache proxy.
+- **Reload vault** re-reads the Markdown folder.
+- **Patterns** shows the Adapter → Decorator → Proxy route.
 
 ## Tests
 
@@ -118,11 +110,12 @@ Saved covers/0001.jpg (63.2 KB).
 dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 ```
 
-The suite covers the Markdown codec/index/repository, all three providers'
+The suite covers the Markdown codec/index/repository/migration, all provider
 adapters, decorator order and caching, proxy caching/validation/concurrency,
-and the Lab 3 behavioral patterns.
+the assembled factory and the Lab 3 behavioral patterns.
 
 Full report: [`../Reports/Lab2.md`](../Reports/Lab2.md).
 
-A `labs-v*` tag also publishes a self-contained `Lab2-win-x64.zip` in the
-GitHub Release, together with the Lab 3 APK and both reports.
+A `labs-v*` tag publishes the signed Lab 2 APK, the signed Lab 3 APK and both
+reports to the GitHub Release. The branch CI workflow
+[`android-labs.yml`](../.github/workflows/android-labs.yml) builds both APKs.

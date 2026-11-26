@@ -9,11 +9,19 @@
 
 The final watchlist app. It builds directly on Lab 2 (same `Watchlist.Core`
 project and the same Markdown vault), adds a visual cover picker, undo/redo,
-live statistics, a guarded entry lifecycle, filters/sorting and AniList / MAL
-import.
+live statistics, a guarded entry lifecycle, search, filters/sorting and
+AniList / MAL / CSV import. Settings switch the theme and the cover search
+engine, and entries can use a custom kind and an existing category picked from
+a list.
 
 The vault is a folder of Markdown files. On first launch you choose where it
-lives:
+lives, and you can move it later from Settings → Library location. Moving copies
+your entries and covers into the new folder without overwriting anything; the
+old copy is kept.
+
+Settings also has theme mode (System, Light, Dark) and an accent color that
+recolors buttons and switches. The main screen switches between a list and a
+cover grid.
 
 ```text
 /storage/emulated/0/Documents/TMPS-Watchlist/   shared, visible in Files
@@ -46,14 +54,18 @@ Lab3/
     Observers/             subject, statistics, activity log, UI callback
     States/                Planned, Consumed, Rated states + context
     Export/                Strategy: CSV and Markdown
-    Import/                AniList GraphQL + MAL XML adapters
+    Import/                AniList GraphQL + MAL XML + CSV adapters
   App/                     Lab3 MAUI Android client
-    MainPage               cards, stats, filters, undo/redo, export
-    EditPage               metadata + cover entry point
+                           package net.plesu.dinu.shameless.watchlist
+    MainPage               cards, stats, search, filters, undo/redo, export
+    EditPage               metadata, custom kind, category picker
     CoverPickerPage        provider search + local download
-    ImportPage             AniList username / MAL XML preview + import
+    ImportPage             source preview + import with progress
+    SettingsPage           theme + cover search engine
     StorageSetupPage       first-run folder + permission choice
     StorageLocations       shared/app paths + permission flow
+    Resources/AppIcon      adaptive app icon (SVG background + foreground)
+    Resources/Images       logo.svg shown in the header
 ```
 
 ## Behavioral patterns
@@ -87,8 +99,11 @@ reused by the cover picker and import path.
   POINT_10 score, progress, format, genres and cover URL.
 - **MAL** — reads the XML from Profile → Export/Import. No OAuth. Maps anime
   and manga rows, Completed/score, progress and cover URL.
+- **CSV** — any service that exports a title list. `Title` is required;
+  `Kind`, `Category`, `Status`, `Rating`, `Progress` and `Tags` are optional.
 - Duplicates are matched by normalized title + kind and shown in the preview.
-  Import runs as one undoable Command.
+  Import runs as one undoable Command with a live progress bar; a failure rolls
+  back all entries from that run.
 - **Export** — CSV or Markdown, written to the cache folder and opened with the
   Android share sheet.
 
@@ -103,10 +118,10 @@ $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
 dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
 ```
 
-APK output: `Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk`.
+APK output: `Lab3/App/bin/Debug/net10.0-android/net.plesu.dinu.shameless.watchlist-Signed.apk`.
 
 Pushing a `labs-v*` tag builds the release APK in CI and attaches it to the
-GitHub Release (the workflow also publishes the Lab 2 Windows zip and both
+GitHub Release (the workflow also publishes the Lab 2 APK and both
 reports):
 
 ```powershell
@@ -121,7 +136,7 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 ```
 
 The suite covers command undo/redo, observer subscription and failure
-isolation, all state transitions, strategy switching, AniList/MAL mapping,
-duplicate detection, import undo and vault migration.
+isolation, all state transitions, strategy switching, AniList/MAL/CSV mapping,
+duplicate detection, import undo, custom-kind persistence and vault migration.
 
 Full report: [`../Reports/Lab3.md`](../Reports/Lab3.md).

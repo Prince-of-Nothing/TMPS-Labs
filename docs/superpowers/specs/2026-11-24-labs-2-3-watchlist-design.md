@@ -4,6 +4,8 @@
 **Course:** TMPS  
 **Author:** Dinu Pleșu, FAF241
 
+> **Amendment (2026-11-26):** Lab 2 moved from a console app to a .NET MAUI Android client (`Lab2/App`). The shared Core and the vault format are unchanged.
+
 ## Intent
 
 Deliver Lab 2 (structural patterns) and Lab 3 (behavioral patterns) as one

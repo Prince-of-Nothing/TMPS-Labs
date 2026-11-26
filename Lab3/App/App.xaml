@@ -11,10 +11,10 @@
             <Color x:Key="Line">#EAE6DF</Color>
 
             <Style TargetType="Label">
-                <Setter Property="TextColor" Value="{StaticResource Ink}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
             </Style>
             <Style TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{StaticResource Plum}" />
+                <Setter Property="BackgroundColor" Value="{DynamicResource Plum}" />
                 <Setter Property="TextColor" Value="White" />
                 <Setter Property="FontSize" Value="12" />
                 <Setter Property="CornerRadius" Value="8" />
@@ -22,18 +22,22 @@
                 <Setter Property="MinimumHeightRequest" Value="36" />
             </Style>
             <Style TargetType="Entry">
-                <Setter Property="BackgroundColor" Value="#FFFFFF" />
-                <Setter Property="TextColor" Value="{StaticResource Ink}" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
                 <Setter Property="FontSize" Value="14" />
             </Style>
             <Style TargetType="Editor">
-                <Setter Property="BackgroundColor" Value="#FFFFFF" />
-                <Setter Property="TextColor" Value="{StaticResource Ink}" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
                 <Setter Property="FontSize" Value="14" />
             </Style>
             <Style TargetType="Picker">
-                <Setter Property="TextColor" Value="{StaticResource Ink}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
                 <Setter Property="FontSize" Value="13" />
+            </Style>
+            <Style TargetType="SearchBar">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

@@ -23,7 +23,8 @@ public sealed class MediaItem
         string sourceStatus,
         string notes,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        string? customKind = null)
     {
         if (id < 1)
         {
@@ -41,6 +42,7 @@ public sealed class MediaItem
         CoverSourceUrl = NullIfWhiteSpace(coverSourceUrl);
         SourceUrl = NullIfWhiteSpace(sourceUrl);
         SourceStatus = sourceStatus?.Trim() ?? string.Empty;
+        CustomKind = NullIfWhiteSpace(customKind);
         CreatedAt = createdAt == default ? DateTimeOffset.UtcNow : createdAt;
         UpdatedAt = updatedAt == default ? CreatedAt : updatedAt;
 
@@ -50,6 +52,10 @@ public sealed class MediaItem
     public int Id { get; }
     public string Title { get; private set; }
     public MediaKind Kind { get; private set; }
+    public string? CustomKind { get; private set; }
+    public string KindLabel => Kind == MediaKind.Custom && !string.IsNullOrWhiteSpace(CustomKind)
+        ? CustomKind
+        : Kind.ToString();
     public string Category { get; private set; }
     public IReadOnlyList<string> Tags => _tags;
     public MediaStatus Status { get; private set; }
@@ -69,10 +75,12 @@ public sealed class MediaItem
         string category,
         IEnumerable<string> tags,
         string notes,
-        string? progress)
+        string? progress,
+        string? customKind = null)
     {
         Title = Require(title, "Title");
         Kind = kind;
+        CustomKind = NullIfWhiteSpace(customKind);
         Category = string.IsNullOrWhiteSpace(category) ? "Uncategorized" : category.Trim();
         _tags.Clear();
         _tags.AddRange(NormalizeTags(tags));

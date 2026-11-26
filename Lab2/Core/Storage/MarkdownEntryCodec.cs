@@ -12,7 +12,7 @@ public static class MarkdownEntryCodec
 {
     private static readonly string[] KnownKeys =
     [
-        "id", "title", "kind", "category", "tags", "status", "rating",
+        "id", "title", "kind", "customKind", "category", "tags", "status", "rating",
         "progress", "cover", "coverSource", "source", "sourceStatus",
         "created", "updated",
     ];
@@ -93,7 +93,8 @@ public static class MarkdownEntryCodec
                 OptionalString(fields, "sourceStatus", sourcePath) ?? string.Empty,
                 body,
                 createdAt,
-                updatedAt);
+                updatedAt,
+                OptionalString(fields, "customKind", sourcePath));
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
@@ -108,6 +109,11 @@ public static class MarkdownEntryCodec
         Append(sb, "id", item.Id.ToString(CultureInfo.InvariantCulture));
         Append(sb, "title", Quote(item.Title));
         Append(sb, "kind", item.Kind.ToString().ToLowerInvariant());
+        if (item.CustomKind is not null)
+        {
+            Append(sb, "customKind", Quote(item.CustomKind));
+        }
+
         Append(sb, "category", Quote(item.Category));
         Append(sb, "tags", FormatArray(item.Tags));
         Append(sb, "status", item.Status.ToString().ToLowerInvariant());

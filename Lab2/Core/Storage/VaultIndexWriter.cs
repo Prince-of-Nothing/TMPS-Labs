@@ -51,7 +51,7 @@ public static class VaultIndexWriter
                     ? "—"
                     : $"[cover]({item.CoverPath})";
                 sb.Append("| [").Append(Inline(item.Title)).Append("](entries/").Append(Uri.EscapeDataString(file))
-                    .Append(") | ").Append(item.Kind)
+                    .Append(") | ").Append(item.KindLabel)
                     .Append(" | ").Append(Inline(item.Category))
                     .Append(" | ").Append(item.Rating is int rating ? $"{rating}/10" : "—")
                     .Append(" | ").Append(cover).AppendLine(" |");

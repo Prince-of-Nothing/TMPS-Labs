@@ -8,13 +8,55 @@
 
 ---
 
+## Objectives
+
+1. Study and understand the Behavioral Design Patterns.
+2. As a continuation of the previous laboratory work, think about what
+   communication between software entities might be involved in the system.
+3. Create a new project, or add some additional functionalities, using
+   behavioral design patterns.
+
+## Main tasks
+
+By extending the project, implement at least 1 behavioral design pattern:
+
+- the implemented pattern should help perform the tasks the system offers;
+- the behavioral patterns can be integrated into the functionalities alongside
+  the structural ones;
+- there should be only one client for the whole system.
+
+## Theory
+
+Behavioral patterns describe how objects communicate and divide
+responsibility: who asks for work, who does it, and who hears about the
+result. They make that communication more flexible by replacing hard-wired
+calls and conditionals with objects. The common ones are Chain of
+Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer,
+State, Strategy, Template Method and Visitor.
+
+This lab uses four of them:
+
+- **Command** turns a request into an object, so it can be queued, logged and
+  undone.
+- **Observer** lets one subject notify any number of subscribers about a
+  change without knowing their concrete types.
+- **State** moves state-dependent behavior into one class per state, so the
+  object changes its behavior when its state changes.
+- **Strategy** puts interchangeable algorithms behind one interface and lets
+  the client pick one at runtime.
+
+---
+
 ## 1. Domain description
 
 Lab 3 is the final watchlist application. It keeps the same media domain as
 Lab 2 and reads/writes the same Markdown vault, but adds the interactive
 behavior a real user expects: undo/redo, live counters, a guarded
 planned → consumed → rated lifecycle, runtime filtering and export format
-selection, a visual cover picker, and import from AniList or a MAL XML export.
+selection, a visual cover picker, import from AniList, a MAL XML export or a
+generic CSV, and settings for theme and cover search provider. Search and a
+Completed filter narrow the list; entries can use a user-created kind and an
+existing category chosen from a picker.
 
 The library remains portable. On first launch the user chooses a location:
 
@@ -52,12 +94,20 @@ Reused from Lab 2:
 - `MarkdownWatchlistStore`, `MarkdownEntryCodec`, `WatchlistRepository`;
 - `VaultMigrator` for copying the existing vault into a new location;
 - `MediaItem`, `MediaItemBuilder`;
+- the custom-kind extension (`MediaKind.Custom` + `CustomKind`/`KindLabel`)
+  stored as `customKind:` frontmatter, so a Lab 3 entry keeps its own label
+  when read by Lab 2;
 - the structural cover pipeline: `ICoverCatalog`, provider adapters,
-  filtering/caching decorators, `CachedCoverImageProxy`.
+  filtering/caching decorators, `CachedCoverImageProxy`, assembled by
+  `CoverServiceFactory`.
 
-The cover picker in Lab 3 therefore uses exactly the same Adapter + Decorator +
-Proxy path, and imported AniList/MAL covers can be displayed remotely or saved
-locally through the same proxy.
+`AppServices` gets its `CoverService` from the same `CoverServiceFactory.Create`
+call the Lab 2 app uses, so the cover picker in Lab 3 uses exactly the same
+Adapter + Decorator + Proxy path without repeating its wiring. Imported
+AniList/MAL covers can be displayed remotely or saved locally through the same
+proxy. The behavioral patterns sit on top of that path: choosing a cover is a
+`SetCoverCommand` (undoable), and the save publishes an Observer event that
+refreshes the card.
 
 ## 3. Project structure
 
@@ -629,9 +679,20 @@ require a registered client id and secrets; the XML avoids both. It parses
 `<anime>` and `<manga>` rows, score, watched/read progress, type, status, image
 and MAL id. The XML reader prohibits DTDs and resolves no external entities.
 
+### CSV
+
+[`Lab3/Behavioral/Import/CsvWatchlistImporter.cs`](../Lab3/Behavioral/Import/CsvWatchlistImporter.cs)
+is the “any other service” path: a CSV with at least a `Title` column. Optional
+`Kind`, `Category`, `Status`, `Rating`, `Progress` and `Tags` columns are
+mapped case-insensitively; unknown headers are ignored. The app reads the file
+through Android's document picker, so no extra permission is needed.
+
 Duplicate detection in `ImportService` normalizes title punctuation,
 diacritics and case, then compares title + kind. The preview reports new and
-duplicate rows; import is one `ImportMediaCommand`.
+duplicate rows; import is one `ImportMediaCommand`. While it runs,
+`ImportProgress` reports `processed/total` and the current title to the UI
+progress bar; the whole import remains a single undoable command, and a
+failure rolls back every entry added in that run.
 
 ### Export
 
@@ -676,15 +737,22 @@ fully compatible with Lab 2.
 - a stats strip (total, planned, consumed, rated, average);
 - Add / Import / Export / Undo / Redo / Reload / Activity;
 - Live stats switch;
-- status filter and sort picker;
+- search by title, category or tag;
+- status filter (All / Planned / Completed / Consumed / Rated) and sort picker;
 - cards with local/remote cover, title, kind/category/tags, status, progress,
   notes preview, and status-aware actions.
 
-`EditPage` edits metadata and opens `CoverPickerPage` (search, thumbnails,
-provider label, local download). `ImportPage` chooses AniList or MAL XML,
-previews new/duplicate counts, then imports. Covers are resolved from the local
-vault first and fall back to the remote URL, so an entry remains visible even
-if the cover file is missing.
+`EditPage` edits metadata, accepts a free-text custom kind (stored as
+`kind: custom` + `customKind: …`), and offers an existing-category picker next
+to the category field. `CoverPickerPage` searches with thumbnails, provider
+label and local download. `ImportPage` chooses AniList, MAL XML or CSV,
+previews new/duplicate counts, then imports with a progress bar.
+`SettingsPage` (toolbar item) switches the theme between System/Light/Dark and
+selects the cover search engine (Auto, Wikimedia, Open Library or TVmaze); both
+choices are stored in `Preferences` and applied without a restart. All pages
+use `AppThemeBinding` colours, so dark mode covers the whole app. Covers are
+resolved from the local vault first and fall back to the remote URL, so an
+entry remains visible even if the cover file is missing.
 
 The verified emulator run (Medium_Phone API 37) chose shared Documents, created
 the vault, restarted into the saved path, then loaded an entry written directly
@@ -703,11 +771,11 @@ dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 Verified result:
 
 ```text
-Passed!  - Failed:     0, Passed:    49, Skipped:     0, Total:    49, Duration: 110 ms
+Passed!  - Failed:     0, Passed:    55, Skipped:     0, Total:    55, Duration: 115 ms
 ```
 
-The Lab 3 tests cover all four claimed patterns, the import mapping and the
-vault migration:
+The Lab 3 tests cover all four claimed patterns, the import mapping, the CSV
+reader and the vault migration:
 
 ```text
 Watchlist.Tests.CommandTests.*                 9 tests
@@ -715,8 +783,13 @@ Watchlist.Tests.ObserverTests.*                5 tests
 Watchlist.Tests.StateTests.*                   4 tests
 Watchlist.Tests.ExportTests.*                   3 tests
 Watchlist.Tests.ImportTests.*                  7 tests
+Watchlist.Tests.CsvImportTests.*                3 tests
 Watchlist.Tests.VaultMigratorTests.*            2 tests
 ```
+
+The shared project also adds a custom-kind round trip in `MarkdownVaultTests`
+and keeps the Lab 2 structural tests green (12 cover-pattern tests, 10 vault
+tests).
 
 Run `dotnet test --list-tests` to see the exact names; the pattern tables in
 sections 4–7 list the names and what each one proves.
@@ -746,18 +819,20 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  11.2 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk
 ```
 
-A Release publish with the same command as CI (`-c Release`,
-`-p:AndroidKeyStore=false`) also completed with AOT compilation and produced a
-27.9 MB APK, with no XamlC binding warnings.
+The debug APK used for the emulator run is built with
+`-p:EmbedAssembliesIntoApk=true` so it installs without the IDE's fast
+deployment step. A Release publish with the same command as CI (`-c Release`,
+`-p:AndroidKeyStore=false`) also completed with AOT compilation, with no XamlC
+binding warnings.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
-tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
-workload and JDK 21 and publishes the APK. The `labs-release.yml` workflow runs
-on `labs-v*` tags, runs the tests, publishes the self-contained Lab 2 zip and
-the signed Lab 3 APK, and attaches both plus the reports to a GitHub Release.
+tooling (`XA0030`). The repository's `android-labs.yml` workflow installs the
+workload and JDK 21 and publishes both Android APKs. The `labs-release.yml`
+workflow runs on `labs-v*` tags, runs the tests, publishes the signed Lab 2
+and Lab 3 APKs, and attaches both plus the reports to a GitHub Release.
 
 Runtime smoke test: the app was installed on the `Medium_Phone_API_37`
 emulator. The first-run storage page was shown; shared Documents was chosen,
@@ -768,7 +843,18 @@ Android debug keystore; for a manual install without the IDE's fast-deployment
 step, it also needs `-p:EmbedAssembliesIntoApk=true`. A normal IDE deploy
 handles both steps automatically. The screenshots above are from that run.
 
-## 14. Conclusions
+## 14. Requirements checklist
+
+| Requirement | Where it is met |
+|---|---|
+| At least 1 behavioral pattern | Command (§4), Observer (§5), State (§6), Strategy (§7) |
+| Patterns perform real tasks of the system | Undo/redo of every edit, live statistics, the guarded lifecycle and the export format switch are all normal app actions (§8) |
+| Behavioral patterns alongside the structural ones | The cover picker runs Lab 2's Adapter → Decorator → Proxy pipeline, and the chosen cover is applied by an undoable `SetCoverCommand` that publishes an Observer event (§2) |
+| One client for the whole system | `Lab3/App`, the MAUI Android app, is the only client of Lab 3 |
+| Modules separated by responsibility | `Commands`, `Observers`, `States`, `Export`, `Import` in `Watchlist.Behavioral`; UI in `App`; domain and storage in Lab 2's `Watchlist.Core` (§3) |
+| Git hosting, README and report | This repository, `Lab3/README.md` and this report |
+
+## 15. Conclusions
 
 The hardest part was keeping two sources of truth consistent: the Markdown files
 and the in-memory list/command history. The solution is to make every mutation

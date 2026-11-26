@@ -3,57 +3,61 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Lab3.EditPage"
              Title="Entry"
-             BackgroundColor="#F8F6F3">
+             BackgroundColor="{AppThemeBinding Light=#F8F6F3, Dark=#121016}">
 
     <ScrollView Padding="16,12">
         <VerticalStackLayout Spacing="12">
             <Label x:Name="HeaderLabel" Text="New entry" FontSize="24" FontAttributes="Bold" />
 
-            <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
                     StrokeShape="RoundRectangle 16" Padding="14">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Title" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                    <Label Text="Title" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
                     <Entry x:Name="TitleEntry" Placeholder="Title" />
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <VerticalStackLayout Grid.Column="0" Spacing="4">
-                            <Label Text="Kind" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                            <Label Text="Kind" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
                             <Picker x:Name="KindPicker" Title="Kind" />
+                            <Entry x:Name="CustomKindEntry" Placeholder="Custom kind (optional)" />
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="4">
-                            <Label Text="Category" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                            <Label Text="Category" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
                             <Entry x:Name="CategoryEntry" Placeholder="Uncategorized" />
+                            <Button Text="Choose existing" Clicked="OnCategoryPickClicked"
+                                    BackgroundColor="#EAE6DF" TextColor="#4A2E3E" FontSize="10"
+                                    Padding="6,2" MinimumHeightRequest="28" HorizontalOptions="Start" />
                         </VerticalStackLayout>
                     </Grid>
 
-                    <Label Text="Tags (comma-separated)" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                    <Label Text="Tags (comma-separated)" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
                     <Entry x:Name="TagsEntry" Placeholder="action, classic" />
 
-                    <Label Text="Progress" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                    <Label Text="Progress" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
                     <Entry x:Name="ProgressEntry" Placeholder="3/12" />
 
-                    <Label Text="Notes" FontSize="12" FontAttributes="Bold" TextColor="#6B5B7A" />
+                    <Label Text="Notes" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
                     <Editor x:Name="NotesEditor" Placeholder="Your notes..." HeightRequest="110" AutoSize="TextChanges" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="#FFFFFF" Stroke="#EAE6DF" StrokeThickness="1"
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
                     StrokeShape="RoundRectangle 16" Padding="14">
                 <Grid ColumnDefinitions="82,*" ColumnSpacing="12">
-                    <Border Grid.Column="0" BackgroundColor="#F1EDE7" StrokeThickness="0"
+                    <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#F1EDE7, Dark=#2A2632}" StrokeThickness="0"
                             StrokeShape="RoundRectangle 10" HeightRequest="118" WidthRequest="82">
                         <Image x:Name="CoverPreview" Aspect="AspectFill" />
                     </Border>
                     <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                        <Label Text="Cover" FontSize="13" FontAttributes="Bold" TextColor="#6B5B7A" />
-                        <Label x:Name="CoverLabel" Text="No local cover yet." FontSize="11" TextColor="#8A7F8C" />
+                        <Label Text="Cover" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                        <Label x:Name="CoverLabel" Text="No local cover yet." FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
                         <Button x:Name="ChooseCoverButton" Text="Search a cover" Clicked="OnChooseCoverClicked"
                                 BackgroundColor="#D3B5C4" TextColor="#4A2E3E" HorizontalOptions="Start" />
                     </VerticalStackLayout>
                 </Grid>
             </Border>
 
-            <Label x:Name="StatusLabel" FontSize="12" TextColor="#A0899C" />
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="{AppThemeBinding Light=#A0899C, Dark=#C9BDCF}" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="Save" Clicked="OnSaveClicked" FontAttributes="Bold" />
                 <Button Grid.Column="1" Text="Cancel" Clicked="OnCancelClicked"

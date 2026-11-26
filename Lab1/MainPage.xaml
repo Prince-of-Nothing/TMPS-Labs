@@ -11,7 +11,7 @@
             <!-- Header -->
             <Label Text="Consumed Media Watchlist"
                    FontSize="26"
-                   FontWeight="Bold"
+                   FontAttributes="Bold"
                    TextColor="#1A1525" />
 
             <!-- Input card -->
@@ -23,12 +23,12 @@
                 <VerticalStackLayout Spacing="10">
                     <Label Text="Add new entry"
                            FontSize="14"
-                           FontWeight="Bold"
+                           FontAttributes="Bold"
                            TextColor="#6B5B7A" />
 
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
                         <Entry Grid.Row="0" Grid.Column="0" x:Name="TitleEntry" Placeholder="Title" BackgroundColor="#F8F6F3" TextColor="#1A1525" FontSize="14" />
-                        <Button Grid.Row="0" Grid.Column="1" Text="Add" Clicked="OnAddClicked" BackgroundColor="#6B5B7A" TextColor="#FFFFFF" FontWeight="Bold" CornerRadius="8" />
+                        <Button Grid.Row="0" Grid.Column="1" Text="Add" Clicked="OnAddClicked" BackgroundColor="#6B5B7A" TextColor="#FFFFFF" FontAttributes="Bold" CornerRadius="8" />
 
                         <Entry Grid.Row="1" Grid.Column="0" x:Name="CategoryEntry" Placeholder="Category" BackgroundColor="#F8F6F3" TextColor="#1A1525" FontSize="14" />
                         <Entry Grid.Row="1" Grid.Column="1" x:Name="TagsEntry" Placeholder="Tags (comma-separated)" BackgroundColor="#F8F6F3" TextColor="#1A1525" FontSize="14" />
@@ -50,7 +50,7 @@
                             <VerticalStackLayout Spacing="8">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                     <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                        <Label Text="{Binding Title}" FontSize="17" FontWeight="Bold" TextColor="#1A1525" />
+                                        <Label Text="{Binding Title}" FontSize="17" FontAttributes="Bold" TextColor="#1A1525" />
                                         <Label Text="{Binding Description}" FontSize="13" TextColor="#8A7F8C" />
                                     </VerticalStackLayout>
                                     <Button Grid.Column="1" Text="Edit" Clicked="OnEditItem" CommandParameter="{Binding Id}" BackgroundColor="#6B5B7A" TextColor="#FFFFFF" FontSize="11" CornerRadius="8" Padding="10,4" />

@@ -37,6 +37,23 @@ public sealed class MarkdownVaultTests
     }
 
     [Fact]
+    public void Codec_round_trips_a_user_created_kind()
+    {
+        var item = new MediaItemBuilder()
+            .WithTitle("Umineko")
+            .WithKind(MediaKind.Custom)
+            .WithCustomKind("Visual Novel")
+            .Build(9);
+
+        var parsed = MarkdownEntryCodec.Parse(
+            MarkdownEntryCodec.Write(item), "custom.md");
+
+        Assert.Equal(MediaKind.Custom, parsed.Kind);
+        Assert.Equal("Visual Novel", parsed.CustomKind);
+        Assert.Equal("Visual Novel", parsed.KindLabel);
+    }
+
+    [Fact]
     public void Codec_extracts_unknown_frontmatter_keys_for_later_preservation()
     {
         var text = MarkdownEntryCodec.Write(Item());
