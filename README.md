@@ -12,7 +12,7 @@ through the four labs. Each lab is a separate runnable project and report.
 |---|---|---|---|
 | [Lab 0](Lab0/README.md) | SOLID principles | .NET console | [Report](Lab0/Report.md) |
 | [Lab 1](Lab1/README.md) | Creational patterns | .NET MAUI Android | [Report](Reports/Lab1.md) |
-| [Lab 2](Lab2/README.md) | Structural patterns | .NET console | [Report](Reports/Lab2.md) |
+| [Lab 2](Lab2/README.md) | Structural patterns | .NET MAUI Android | [Report](Reports/Lab2.md) |
 | [Lab 3](Lab3/README.md) | Behavioral patterns | .NET MAUI Android | [Report](Reports/Lab3.md) |
 
 ## Shared domain
@@ -32,9 +32,8 @@ AniList/MAL import and CSV/Markdown export).
 
 Pushing a tag such as `labs-v1.0` runs
 [`.github/workflows/labs-release.yml`](.github/workflows/labs-release.yml):
-it runs the tests, publishes a self-contained Windows build of Lab 2, builds
-and signs the Lab 3 APK, and attaches both plus the reports to a GitHub
-Release.
+it runs the tests, builds and signs the Lab 2 and Lab 3 Android APKs, and
+attaches both plus the reports to a GitHub Release.
 
 ```powershell
 git tag labs-v1.0
@@ -46,13 +45,11 @@ Lab 1 keeps its own `v*` release workflow.
 ## Run everything
 
 ```powershell
-# Console lab
-dotnet run --project .\Lab2\Console\Lab2.csproj
-
 # Tests for both labs
 dotnet test .\Tests\Watchlist.Tests\Watchlist.Tests.csproj
 
-# Android lab (needs MAUI workload, JDK 21, Android SDK)
+# Android labs (need MAUI workload, JDK 21, Android SDK)
+dotnet build .\Lab2\App\Lab2.csproj -f net10.0-android
 dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
 ```
 

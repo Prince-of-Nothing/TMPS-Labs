@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Lab2"
+             x:Class="Lab2.MainPage"
+             Title="Watchlist"
+             BackgroundColor="#F4F6F5">
+
+    <Grid Padding="16,12" RowSpacing="10" RowDefinitions="Auto,Auto,Auto,*,Auto">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Watchlist" FontSize="28" FontAttributes="Bold" />
+                <Label Text="Lab 2 · structural patterns" FontSize="12" TextColor="#2F6F73" FontAttributes="Bold" />
+                <Label x:Name="SubtitleLabel" FontSize="11" TextColor="#6E7B85" LineBreakMode="MiddleTruncation" />
+            </VerticalStackLayout>
+            <Button Grid.Column="1" Text="+ Add" Clicked="OnAddClicked" FontAttributes="Bold"
+                    CornerRadius="10" Padding="16,8" VerticalOptions="Center" />
+        </Grid>
+
+        <Border Grid.Row="1" BackgroundColor="#FFFFFF" Stroke="#DFE5E3" StrokeThickness="1"
+                StrokeShape="RoundRectangle 16" Padding="14,10">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <VerticalStackLayout Grid.Column="0" Spacing="0">
+                    <Label x:Name="TotalValue" Text="0" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="total" FontSize="11" TextColor="#6E7B85" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="0">
+                    <Label x:Name="PlannedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Label Text="planned" FontSize="11" TextColor="#6E7B85" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="2" Spacing="0">
+                    <Label x:Name="ConsumedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="#4F6B2F" />
+                    <Label Text="consumed" FontSize="11" TextColor="#6E7B85" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="3" Spacing="0">
+                    <Label x:Name="RatedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="#8A5A2B" />
+                    <Label Text="rated" FontSize="11" TextColor="#6E7B85" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
+            <Button Grid.Column="0" Text="Reload vault" Clicked="OnReloadClicked"
+                    BackgroundColor="#DFE5E3" TextColor="#16202A" />
+            <Button Grid.Column="1" Text="Patterns" Clicked="OnPatternsClicked"
+                    BackgroundColor="#BFD9D6" TextColor="#16303A" />
+        </Grid>
+
+        <RefreshView Grid.Row="3" x:Name="Refresh" Refreshing="OnRefreshing">
+            <CollectionView x:Name="ItemsList" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Padding="24" Spacing="8" VerticalOptions="Center">
+                        <Label Text="Nothing here yet" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="Add an entry, then use Cover to find its poster or book cover."
+                               FontSize="13" TextColor="#6E7B85" HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="local:ItemRow">
+                        <Border BackgroundColor="#FFFFFF" Stroke="#DFE5E3" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 16" Padding="12" Margin="0,4">
+                            <Grid ColumnDefinitions="92,*" ColumnSpacing="12">
+                                <Border Grid.Column="0" BackgroundColor="#E9EEEC" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 10" HeightRequest="132" WidthRequest="92">
+                                    <Image Source="{Binding Cover}" Aspect="AspectFill"
+                                           SemanticProperties.Description="Cover image" />
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                    <Label Text="{Binding Title}" FontSize="17" FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Subtitle}" FontSize="12" TextColor="#6E7B85"
+                                           LineBreakMode="TailTruncation" />
+
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Border BackgroundColor="{Binding StatusColor}" StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 8" Padding="8,2">
+                                            <Label Text="{Binding StatusText}" FontSize="11" FontAttributes="Bold" />
+                                        </Border>
+                                        <Label Text="{Binding ProgressText}" FontSize="11" TextColor="#6E7B85"
+                                               VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+
+                                    <Label Text="{Binding NotesPreview}" FontSize="11" TextColor="#7C8A86"
+                                           IsVisible="{Binding HasNotes}" LineBreakMode="TailTruncation" />
+
+                                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                                          ColumnSpacing="5" RowSpacing="5">
+                                        <Button Grid.Row="0" Grid.Column="0" Text="Consume"
+                                                IsVisible="{Binding IsPlanned}" Clicked="OnConsumeClicked"
+                                                CommandParameter="{Binding Id}" FontSize="10" Padding="4,2"
+                                                MinimumHeightRequest="30" BackgroundColor="#C9DDB8" TextColor="#2E4220" />
+                                        <Button Grid.Row="0" Grid.Column="1" Text="Rate"
+                                                IsVisible="{Binding CanRate}" Clicked="OnRateClicked"
+                                                CommandParameter="{Binding Id}" FontSize="10" Padding="4,2"
+                                                MinimumHeightRequest="30" BackgroundColor="#E8D3B8" TextColor="#4A3420" />
+                                        <Button Grid.Row="0" Grid.Column="2" Text="Reopen"
+                                                IsVisible="{Binding CanReopen}" Clicked="OnReopenClicked"
+                                                CommandParameter="{Binding Id}" FontSize="10" Padding="4,2"
+                                                MinimumHeightRequest="30" BackgroundColor="#DFE5E3" TextColor="#16202A" />
+                                        <Button Grid.Row="1" Grid.Column="0" Text="Edit" Clicked="OnEditClicked"
+                                                CommandParameter="{Binding Id}" FontSize="10" Padding="4,2"
+                                                MinimumHeightRequest="30" BackgroundColor="#DFE5E3" TextColor="#16202A" />
+                                        <Button Grid.Row="1" Grid.Column="1" Text="Cover" Clicked="OnCoverClicked"
+                                                CommandParameter="{Binding Id}" FontSize="10" Padding="4,2"
+                                                MinimumHeightRequest="30" BackgroundColor="#BFD9D6" TextColor="#16303A" />
+                                        <Button Grid.Row="1" Grid.Column="2" Text="Delete" Clicked="OnDeleteClicked"
+                                                CommandParameter="{Binding Id}" FontSize="10" Padding="4,2"
+                                                MinimumHeightRequest="30" BackgroundColor="#D9B8B3" TextColor="#4A2420" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <Label Grid.Row="4" x:Name="StatusLabel" FontSize="11" TextColor="#6E7B85"
+               LineBreakMode="TailTruncation" />
+    </Grid>
+</ContentPage>

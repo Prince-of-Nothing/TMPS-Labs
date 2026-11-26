@@ -1,4 +1,4 @@
-name: Lab 2 and tests
+name: Lab 2 and Lab 3 tests
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,9 +17,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-
-      - name: Build Lab 2 console
-        run: dotnet build Lab2/Console/Lab2.csproj
 
       - name: Test both labs
         run: dotnet test Tests/Watchlist.Tests/Watchlist.Tests.csproj --verbosity normal

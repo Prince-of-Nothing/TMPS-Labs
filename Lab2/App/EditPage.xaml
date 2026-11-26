@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab2.EditPage"
+             Title="Entry"
+             BackgroundColor="#F4F6F5">
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="12">
+            <Label x:Name="HeaderLabel" Text="New entry" FontSize="24" FontAttributes="Bold" />
+
+            <Border BackgroundColor="#FFFFFF" Stroke="#DFE5E3" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Title" FontSize="12" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Entry x:Name="TitleEntry" Placeholder="Title" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Kind" FontSize="12" FontAttributes="Bold" TextColor="#2F6F73" />
+                            <Picker x:Name="KindPicker" Title="Kind" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label Text="Category" FontSize="12" FontAttributes="Bold" TextColor="#2F6F73" />
+                            <Entry x:Name="CategoryEntry" Placeholder="Uncategorized" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Label Text="Tags (comma-separated)" FontSize="12" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Entry x:Name="TagsEntry" Placeholder="action, classic" />
+
+                    <Label Text="Progress" FontSize="12" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Entry x:Name="ProgressEntry" Placeholder="3/12" />
+
+                    <Label Text="Notes" FontSize="12" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Editor x:Name="NotesEditor" Placeholder="Your notes..." HeightRequest="110" AutoSize="TextChanges" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Covers are chosen from the card's Cover button." FontSize="11" TextColor="#6E7B85" />
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="#8A5A2B" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="Save" Clicked="OnSaveClicked" FontAttributes="Bold" />
+                <Button Grid.Column="1" Text="Cancel" Clicked="OnCancelClicked"
+                        BackgroundColor="#DFE5E3" TextColor="#16202A" />
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

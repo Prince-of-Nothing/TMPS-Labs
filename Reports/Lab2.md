@@ -2,7 +2,7 @@
 
 **Course:** Tehnici și Mecanisme de Proiectare Software (TMPS)  
 **Author:** Dinu Pleșu, FAF241  
-**Technology:** C# / .NET 10 console  
+**Technology:** C# / .NET 10 MAUI (Android)  
 **Year:** 2026  
 **Instructor:** Istrati Daniel
 
@@ -112,13 +112,15 @@ Lab2/
 │       ├── Adapters/               Adapter pattern
 │       ├── Decorators/             Decorator pattern
 │       └── Images/                 Proxy pattern
-└── Console/                        Lab 2 client
-    ├── Program.cs
-    ├── Lab2Composition.cs
-    └── ConsoleApp.cs
+└── App/                            Lab 2 MAUI client
+    ├── MainPage.xaml(.cs)           cards, stats, actions
+    ├── EditPage.xaml(.cs)           metadata form
+    ├── CoverPickerPage.xaml(.cs)    provider search + download
+    ├── PatternsPage.xaml(.cs)       structural chain in the UI
+    └── AppServices.cs               client composition root
 ```
 
-The console client depends on `CoverService`, `IWatchlistStore` and
+The MAUI client depends on `CoverService`, `IWatchlistStore` and
 `WatchlistRepository`; it never constructs a provider, adapter, decorator or
 file format itself. Object creation is buried in Core, as the task asks:
 
@@ -126,7 +128,7 @@ file format itself. Object creation is buried in Core, as the task asks:
 - `CoverServiceFactory` builds the provider clients, the three adapters, the
   routing table and the decorator chain, and returns a ready `CoverService`.
 
-`Lab2Composition` is a few lines that call those two factories, and Lab 3 calls
+`AppServices` is a few lines that call those two factories, and Lab 3 calls
 the same `CoverServiceFactory`, so the pipeline is defined once.
 
 ```csharp
@@ -184,7 +186,7 @@ means adding a client and an adapter only.
 ```mermaid
 classDiagram
 direction TB
-class ConsoleApp {
+class MainPage {
   <<Client>>
 }
 class CoverService {
@@ -230,7 +232,7 @@ class RoutingCoverCatalog {
   -ICoverCatalog fallback
   +SearchAsync(query, kind, ct) Task
 }
-ConsoleApp --> CoverService : uses
+MainPage --> CoverService : uses
 CoverService --> ICoverCatalog : target
 ICoverCatalog <|.. WikimediaCoverAdapter : implements
 ICoverCatalog <|.. OpenLibraryCoverAdapter : implements
@@ -490,7 +492,7 @@ stays in `coverSource`), which keeps the vault small.
 The cover workflow is one execution path through Adapter, Decorator and Proxy:
 
 ```text
-ConsoleApp
+MainPage
   -> ICoverCatalog (FilteringCoverCatalog)      Decorator
   -> ICoverCatalog (CachingCoverCatalog)        Decorator
   -> RoutingCoverCatalog
@@ -502,9 +504,9 @@ ConsoleApp
   -> covers/<id>.jpg
 ```
 
-The console's `patterns` command prints the same chain. This is not three
-isolated demos in `main()`: the normal `search` command goes through all three
-patterns and then writes the result into the Markdown entry.
+The **Patterns** page shows the same chain. This is not three isolated demos:
+the normal Cover flow goes through all three patterns and then writes the
+result into the Markdown entry.
 
 `CoverServiceFactory` builds this chain, and two tests check the assembled
 pipeline rather than each class alone:
@@ -520,7 +522,7 @@ pipeline rather than each class alone:
   category, tags, status, cover, source, timestamps) step by step.
 - **Factory Method:** `WatchlistStoreFactory` declares creation of the store;
   `MarkdownWatchlistStoreFactory` supplies the Markdown implementation.
-  Changing storage is a new factory, not an edit in the console.
+  Changing storage is a new factory, not an edit in the client.
 
 `CoverServiceFactory` follows the same idea for the structural pipeline: the
 client asks for a `CoverService` and the factory decides which adapters and
@@ -528,45 +530,31 @@ decorators exist and in which order. The client depends on abstractions only.
 
 ## 8. Runnable demo
 
-The full transcript is reproducible with `dotnet run --project
-.\Lab2\Console\Lab2.csproj`, a temporary `TMPS_LAB2_LIBRARY`, and the commands
-from `Lab2/README.md`. Excerpt from the verified run (26 Nov 2026), where a
-book search is routed to the Open Library adapter:
+The app runs as an Android APK. Verified run on `Medium_Phone_API_37`
+(26 Nov 2026):
+
+1. Added “The Matrix”.
+2. Opened **Cover**, searched for `The Matrix poster`.
+3. The request passed through `FilteringCoverCatalog` → `CachingCoverCatalog`
+   → `RoutingCoverCatalog` → `WikimediaCoverAdapter` and returned provider hits.
+4. Selected a result; `CachedCoverImageProxy` downloaded and stored
+   `covers/0001.png`.
+5. The card reloaded with the cover, `Planned` status, category and tags.
+
+![Lab 2 running on Android](../docs/lab2-screen.png)
+
+The **Patterns** page prints the same route for the user:
+
+![Lab 2 Patterns page](../docs/lab2-patterns.png)
+
+The entry file is still ordinary Markdown; the selected cover is a normal image
+in the app-private vault:
 
 ```text
-Consumed Media Watchlist — Lab 2 (structural patterns)
-Vault: C:\Users\...\lab2-demo-vault
-The library is plain Markdown; open index.md without this app.
-
-watchlist> search
-Entry id: 2
-Search covers for [Dune]:
-Searching through the decorated catalog...
-  [1] Dune — Frank Herbert
-      Open Library · https://covers.openlibrary.org/b/id/11481354-L.jpg
-  ...
-Pick a cover number (blank cancels): 1
-Downloading through the image proxy...
-Saved covers/0002.jpg (21.9 KB).
-
-watchlist> list
-ID   Status           Title                              Kind     Category         Cover Tags
-1    rated 9/10       The Matrix                         Film     Sci-Fi           -     action, classic
-2    planned          Dune                               Book     Sci-Fi           yes   space opera
+/data/user/0/com.tmps.lab2.watchlist/files/library/
+  entries/0001-the-matrix.md
+  covers/0001.png
 ```
-
-The vault after the run:
-
-```text
-index.md                          549 bytes
-entries/0001-the-matrix.md        248 bytes
-entries/0002-dune.md              272 bytes
-covers/0002.jpg                  ~22 KB
-```
-
-`index.md` groups entries by status and links each entry file and cover; the
-Dune entry now has `cover: covers/0002.jpg` and the original Open Library URL
-as `coverSource`.
 
 ## 9. Tests and evidence
 
@@ -594,15 +582,19 @@ Lab2 -> ...\Lab2.dll
 Build succeeded. 0 Warning(s) 0 Error(s)
 ```
 
+The Android client also publishes a signed APK through the release workflow.
+The verified Release APK is 27.5 MB and passes `apksigner` v2/v3 verification:
+`Lab2/App/bin/Release/net10.0-android/com.tmps.lab2.watchlist-Signed.apk`.
+
 ## 10. Requirements checklist
 
 | Requirement | Where it is met |
 |---|---|
 | At least 3 structural patterns | Adapter (§3), Decorator (§4), Proxy (§5) |
-| Patterns perform real tasks of the system | The `search`/`cover` commands find, filter, cache and save a cover through all three (§6) |
+| Patterns perform real tasks of the system | The Cover flow finds, filters, caches and saves a cover through all three (§6) |
 | Creation buried inside the functionalities | `MarkdownWatchlistStoreFactory`, `CoverServiceFactory` and `MediaItemBuilder` live in Core; the client only receives a `CoverService` and a repository (§2, §7) |
-| One client for the whole system | `Lab2/Console` is the only client of Lab 2 |
-| Modules separated by responsibility | `Domain`, `Storage`, `CoverSearch` (`Providers`, `Adapters`, `Decorators`, `Images`) and `Console` (§2) |
+| One client for the whole system | `Lab2/App` is the only client of Lab 2 |
+| Modules separated by responsibility | `Domain`, `Storage`, `CoverSearch` (`Providers`, `Adapters`, `Decorators`, `Images`) and `App` (§2) |
 | Git hosting, README and report | This repository, `Lab2/README.md` and this report |
 
 ## 11. Conclusions
@@ -615,6 +607,6 @@ because a selected cover is immediately a normal file the user can inspect.
 
 I would change two things next. First, a real film provider with an API key
 (TMDB/OMDb) would produce better posters than Wikimedia's file search; the
-current Adapter interface makes that a new adapter only. Second, the console
+current Adapter interface makes that a new adapter only. Second, the app
 downloads the provider thumbnail but does not offer a choice between thumbnail
 and original; a quality selector would be a small addition to `CoverService`.

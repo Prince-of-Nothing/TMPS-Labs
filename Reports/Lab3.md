@@ -790,18 +790,18 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  15.5 MB
+Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk  14.5 MB
 ```
 
 A Release publish with the same command as CI (`-c Release`,
 `-p:AndroidKeyStore=false`) also completed with AOT compilation and produced a
-27.9 MB APK, with no XamlC binding warnings.
+27.6 MB APK, with no XamlC binding warnings.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
-tooling (`XA0030`). The repository's `lab3-android.yml` workflow installs the
-workload and JDK 21 and publishes the APK. The `labs-release.yml` workflow runs
-on `labs-v*` tags, runs the tests, publishes the self-contained Lab 2 zip and
-the signed Lab 3 APK, and attaches both plus the reports to a GitHub Release.
+tooling (`XA0030`). The repository's `android-labs.yml` workflow installs the
+workload and JDK 21 and publishes both Android APKs. The `labs-release.yml`
+workflow runs on `labs-v*` tags, runs the tests, publishes the signed Lab 2
+and Lab 3 APKs, and attaches both plus the reports to a GitHub Release.
 
 Runtime smoke test: the app was installed on the `Medium_Phone_API_37`
 emulator. The first-run storage page was shown; shared Documents was chosen,

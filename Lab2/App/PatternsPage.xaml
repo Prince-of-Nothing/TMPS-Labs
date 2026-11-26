@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab2.PatternsPage"
+             Title="Patterns"
+             BackgroundColor="#F4F6F5">
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="Structural patterns" FontSize="24" FontAttributes="Bold" />
+            <Label Text="Every cover search and download in this app takes this path."
+                   FontSize="13" TextColor="#6E7B85" />
+
+            <Border BackgroundColor="#FFFFFF" Stroke="#DFE5E3" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Cover search" FontSize="14" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Label FontFamily="monospace" FontSize="11" LineHeight="1.3"
+                           Text="MainPage → CoverService&#10;  → FilteringCoverCatalog   Decorator&#10;  → CachingCoverCatalog     Decorator&#10;  → RoutingCoverCatalog&#10;  → OpenLibrary / TvMaze /&#10;    Wikimedia CoverAdapter  Adapter&#10;  → public provider API" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#FFFFFF" Stroke="#DFE5E3" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Cover download" FontSize="14" FontAttributes="Bold" TextColor="#2F6F73" />
+                    <Label FontFamily="monospace" FontSize="11" LineHeight="1.3"
+                           Text="CoverService.SaveAsync&#10;  → CachedCoverImageProxy   Proxy&#10;  → RemoteCoverImage        real subject&#10;  → covers/&lt;id&gt;.jpg in the vault" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#FFFFFF" Stroke="#DFE5E3" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="8">
+                    <Label FontSize="12" Text="Adapter: each provider client returns its own response model; the adapters turn it into CoverCandidate behind ICoverCatalog." />
+                    <Label FontSize="12" Text="Decorator: filtering and caching wrap the catalog with the same ICoverCatalog interface, so neither the provider nor the page changes." />
+                    <Label FontSize="12" Text="Proxy: CachedCoverImageProxy has the same ICoverImage interface as the remote image, checks the local file first and validates type and size." />
+                    <Label FontSize="12" TextColor="#6E7B85" Text="CoverServiceFactory in Core builds this chain; the app only asks it for a CoverService." />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
