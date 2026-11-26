@@ -4,16 +4,14 @@ namespace Lab3;
 
 public partial class App : Application
 {
-    public const string AccentPreferenceKey = "accent";
-
     private AppServices? _services;
 
     public App()
     {
         InitializeComponent();
-        UserAppTheme = ThemeFromPreference(Preferences.Default.Get("theme", "System"));
-        Resources["Plum"] = AccentChoice.Find(
-            Preferences.Default.Get(AccentPreferenceKey, AccentChoice.Default.Key)).Color;
+        ApplyAppearance();
+        AppPreferences.Changed += ApplyAppearance;
+        RequestedThemeChanged += (_, _) => ApplyAppearance();
     }
 
     public static AppTheme ThemeFromPreference(string theme) => theme switch
@@ -23,14 +21,15 @@ public partial class App : Application
         _ => AppTheme.Unspecified,
     };
 
-    /// <summary>Replaces the Plum key that every accent-colored control reads.</summary>
-    public static void ApplyAccent(string key)
+    /// <summary>
+    /// Re-applies theme mode, AMOLED black and accent from preferences. Safe to
+    /// call often: pages bound to palette keys update without being rebuilt.
+    /// </summary>
+    public void ApplyAppearance()
     {
-        var choice = AccentChoice.Find(key);
-        if (Current is { } app)
-        {
-            app.Resources["Plum"] = choice.Color;
-        }
+        UserAppTheme = ThemeFromPreference(AppPreferences.Theme);
+        Resources["Plum"] = AccentChoice.Find(AppPreferences.Accent).Color;
+        ThemePalette.Apply(Resources, ThemePalette.IsDark(this), AppPreferences.Amoled);
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -39,19 +38,23 @@ public partial class App : Application
         if (!string.IsNullOrWhiteSpace(overridePath) && StorageLocations.CanUse(overridePath))
         {
             _services ??= AppServices.Create(overridePath);
-            return MainWindow(new MainPage(_services));
+            return MainWindow(RootTabs(_services, null));
         }
 
         var saved = Preferences.Default.Get(StorageLocations.PreferenceKey, string.Empty);
         if (!string.IsNullOrWhiteSpace(saved) && StorageLocations.CanUse(saved))
         {
             _services ??= AppServices.Create(saved);
-            return MainWindow(new MainPage(_services));
+            return MainWindow(RootTabs(_services, null));
         }
 
         var setup = new StorageSetupPage();
         setup.Chosen += OnStorageChosen;
-        return MainWindow(setup);
+        return MainWindow(new NavigationPage(setup)
+        {
+            BarBackgroundColor = Color.FromArgb("#1A1525"),
+            BarTextColor = Colors.White,
+        });
     }
 
     private void OnStorageChosen(string root) => SwitchLibrary(root, null);
@@ -64,27 +67,45 @@ public partial class App : Application
         var window = Windows.FirstOrDefault();
         if (window is not null)
         {
-            var main = new MainPage(_services);
-            if (notice is not null)
-            {
-                main.ShowNotice(notice);
-            }
-
-            window.Page = NavigationRoot(main);
+            window.Page = RootTabs(_services, notice);
         }
     }
 
-    private static Window MainWindow(Page page) =>
-        new(NavigationRoot(page))
+    /// <summary>
+    /// Bottom tabs in the Aniyomi style: Library, Activity and Settings. Each tab
+    /// has its own navigation stack, so Import, Edit and Cover pages push inside it.
+    /// </summary>
+    private static Page RootTabs(AppServices services, string? notice)
+    {
+        var library = new MainPage(services);
+        if (notice is not null)
         {
-            Title = "Watchlist",
-        };
+            library.ShowNotice(notice);
+        }
 
-    private static NavigationPage NavigationRoot(Page page) =>
+        var tabs = new TabbedPage();
+        tabs.SetDynamicResource(TabbedPage.BarBackgroundColorProperty, "CardBg");
+        tabs.SetDynamicResource(TabbedPage.SelectedTabColorProperty, "Plum");
+        tabs.SetDynamicResource(TabbedPage.UnselectedTabColorProperty, "TextMuted");
+
+        tabs.Children.Add(Tab(library, "Library"));
+        tabs.Children.Add(Tab(new ActivityPage(services), "Activity"));
+        tabs.Children.Add(Tab(new SettingsPage(services), "Settings"));
+        return tabs;
+    }
+
+    private static NavigationPage Tab(Page page, string title) =>
         new(page)
         {
+            Title = title,
             BarBackgroundColor = Color.FromArgb("#1A1525"),
             BarTextColor = Colors.White,
+        };
+
+    private static Window MainWindow(Page page) =>
+        new(page)
+        {
+            Title = "Watchlist",
         };
 }
 

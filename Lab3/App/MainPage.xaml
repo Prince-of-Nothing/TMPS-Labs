@@ -4,22 +4,18 @@
              xmlns:local="clr-namespace:Lab3"
              x:Class="Lab3.MainPage"
              Title="Watchlist"
-             BackgroundColor="{AppThemeBinding Light=#F8F6F3, Dark=#121016}">
-
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Settings" Clicked="OnSettingsClicked" />
-    </ContentPage.ToolbarItems>
+             BackgroundColor="{DynamicResource PageBg}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
             <DataTemplate x:Key="GridCard" x:DataType="local:ItemRow">
-                <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+                <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
                         StrokeShape="RoundRectangle 14" Padding="0">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnGridCardTapped" />
                     </Border.GestureRecognizers>
                     <VerticalStackLayout Spacing="0">
-                        <Border HeightRequest="172" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#F1EDE7, Dark=#2A2632}"
+                        <Border HeightRequest="172" StrokeThickness="0" BackgroundColor="{DynamicResource CoverBg}"
                                 StrokeShape="RoundRectangle 14,14,0,0">
                             <Image Source="{Binding Cover}" Aspect="AspectFill" SemanticProperties.Description="Cover image" />
                         </Border>
@@ -43,8 +39,8 @@
                 <Image Source="logo.svg" HeightRequest="42" WidthRequest="42" VerticalOptions="Center"
                        SemanticProperties.Description="Watchlist logo" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label Text="Watchlist" FontSize="28" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
-                    <Label x:Name="SubtitleLabel" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" LineBreakMode="TailTruncation" />
+                    <Label Text="Watchlist" FontSize="28" FontAttributes="Bold" TextColor="{DynamicResource TextPrimary}" />
+                    <Label x:Name="SubtitleLabel" FontSize="12" TextColor="{DynamicResource TextMuted}" LineBreakMode="TailTruncation" />
                 </VerticalStackLayout>
             </HorizontalStackLayout>
             <Button Grid.Column="1" Text="+ Add" Clicked="OnAddClicked"
@@ -52,24 +48,24 @@
                     CornerRadius="10" Padding="16,8" VerticalOptions="Center" />
         </Grid>
 
-        <Border Grid.Row="1" BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+        <Border Grid.Row="1" BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
                 StrokeShape="RoundRectangle 16" Padding="14,10">
             <Grid ColumnDefinitions="*,*,*,*">
                 <VerticalStackLayout Grid.Column="0" Spacing="0">
                     <Label x:Name="TotalValue" Text="0" FontSize="20" FontAttributes="Bold" />
-                    <Label Text="total" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                    <Label Text="total" FontSize="11" TextColor="{DynamicResource TextMuted}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1" Spacing="0">
-                    <Label x:Name="PlannedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
-                    <Label Text="planned" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                    <Label x:Name="PlannedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                    <Label Text="planned" FontSize="11" TextColor="{DynamicResource TextMuted}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="2" Spacing="0">
-                    <Label x:Name="ConsumedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#3F6B46, Dark=#9BD0A6}" />
-                    <Label Text="consumed" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                    <Label x:Name="ConsumedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource LabelGreen}" />
+                    <Label Text="consumed" FontSize="11" TextColor="{DynamicResource TextMuted}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="3" Spacing="0">
-                    <Label x:Name="RatedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#8C4A63, Dark=#E3A6C1}" />
-                    <Label Text="rated" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                    <Label x:Name="RatedValue" Text="0" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource LabelRose}" />
+                    <Label Text="rated" FontSize="11" TextColor="{DynamicResource TextMuted}" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
@@ -81,24 +77,23 @@
                 <Button Grid.Column="2" x:Name="UndoButton" Text="Undo" Clicked="OnUndoClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
                 <Button Grid.Column="3" x:Name="RedoButton" Text="Redo" Clicked="OnRedoClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
             </Grid>
-            <Grid ColumnDefinitions="*,*,*,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="Reload" Clicked="OnReloadClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
                 <Button Grid.Column="1" x:Name="LayoutButton" Text="Grid view" Clicked="OnLayoutClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
-                <Button Grid.Column="2" Text="Activity" Clicked="OnActivityClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
-                <HorizontalStackLayout Grid.Column="3" Spacing="4" VerticalOptions="Center">
-                    <Label Text="Live stats" FontSize="12" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                    <Label Text="Live stats" FontSize="12" VerticalOptions="Center" TextColor="{DynamicResource LabelPlum}" />
                     <Switch x:Name="LiveStatsSwitch" Toggled="OnLiveStatsToggled" OnColor="{DynamicResource Plum}" />
                 </HorizontalStackLayout>
             </Grid>
         </VerticalStackLayout>
 
         <SearchBar Grid.Row="3" x:Name="SearchEntry" Placeholder="Search title, category or tag"
-                   TextChanged="OnSearchChanged" BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" />
+                   TextChanged="OnSearchChanged" BackgroundColor="{DynamicResource CardBg}" />
 
         <Grid Grid.Row="4" ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
             <Picker x:Name="StatusFilter" Grid.Column="0" Title="Status" SelectedIndexChanged="OnFilterChanged" />
             <Picker x:Name="SortPicker" Grid.Column="1" Title="Sort" SelectedIndexChanged="OnFilterChanged" />
-            <Label x:Name="AverageLabel" Grid.Column="2" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" VerticalOptions="Center" />
+            <Label x:Name="AverageLabel" Grid.Column="2" FontSize="12" TextColor="{DynamicResource TextMuted}" VerticalOptions="Center" />
         </Grid>
 
         <RefreshView Grid.Row="5" x:Name="Refresh" Refreshing="OnRefreshing">
@@ -107,16 +102,16 @@
                     <VerticalStackLayout Padding="24" Spacing="8" VerticalOptions="Center">
                         <Label Text="Nothing here yet" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" />
                         <Label Text="Add an entry, or import AniList, MAL or CSV."
-                               FontSize="13" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" HorizontalOptions="Center"
+                               FontSize="13" TextColor="{DynamicResource TextMuted}" HorizontalOptions="Center"
                                HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="local:ItemRow">
-                        <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+                        <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
                                 StrokeShape="RoundRectangle 16" Padding="12" Margin="0,4">
                             <Grid ColumnDefinitions="92,*" ColumnSpacing="12">
-                                <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#F1EDE7, Dark=#2A2632}" StrokeThickness="0"
+                                <Border Grid.Column="0" BackgroundColor="{DynamicResource CoverBg}" StrokeThickness="0"
                                         StrokeShape="RoundRectangle 10" HeightRequest="132" WidthRequest="92">
                                     <Image Source="{Binding Cover}" Aspect="AspectFill"
                                            SemanticProperties.Description="Cover image" />
@@ -125,19 +120,19 @@
                                 <VerticalStackLayout Grid.Column="1" Spacing="5">
                                     <Label Text="{Binding Title}" FontSize="17" FontAttributes="Bold"
                                            LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding Subtitle}" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}"
+                                    <Label Text="{Binding Subtitle}" FontSize="12" TextColor="{DynamicResource TextMuted}"
                                            LineBreakMode="TailTruncation" />
 
                                     <HorizontalStackLayout Spacing="6">
                                         <Border BackgroundColor="{Binding StatusColor}" StrokeThickness="0"
                                                 StrokeShape="RoundRectangle 8" Padding="8,2">
-                                            <Label Text="{Binding StatusText}" FontSize="11" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
+                                            <Label Text="{Binding StatusText}" FontSize="11" FontAttributes="Bold" TextColor="{DynamicResource TextPrimary}" />
                                         </Border>
-                                        <Label Text="{Binding ProgressText}" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}"
+                                        <Label Text="{Binding ProgressText}" FontSize="11" TextColor="{DynamicResource TextMuted}"
                                                VerticalOptions="Center" />
                                     </HorizontalStackLayout>
 
-                                    <Label Text="{Binding NotesPreview}" FontSize="11" TextColor="{AppThemeBinding Light=#A0899C, Dark=#C9BDCF}"
+                                    <Label Text="{Binding NotesPreview}" FontSize="11" TextColor="{DynamicResource TextFaint}"
                                            IsVisible="{Binding HasNotes}" LineBreakMode="TailTruncation" />
 
                                     <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
@@ -172,7 +167,7 @@
             </CollectionView>
         </RefreshView>
 
-        <Label Grid.Row="6" x:Name="StatusLabel" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}"
+        <Label Grid.Row="6" x:Name="StatusLabel" FontSize="11" TextColor="{DynamicResource TextMuted}"
                LineBreakMode="TailTruncation" />
     </Grid>
 </ContentPage>

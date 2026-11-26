@@ -19,7 +19,15 @@ public partial class SettingsPage : ContentPage
         _services = services;
 
         ThemePicker.ItemsSource = new List<string> { "System", "Light", "Dark" };
-        ThemePicker.SelectedItem = Preferences.Default.Get("theme", "System");
+        ThemePicker.SelectedItem = AppPreferences.Theme;
+        AmoledSwitch.IsToggled = AppPreferences.Amoled;
+
+        DefaultViewPicker.ItemsSource = new List<string> { AppPreferences.ListView, AppPreferences.GridView };
+        DefaultViewPicker.SelectedItem = AppPreferences.DefaultView;
+        DefaultSortPicker.ItemsSource = AppPreferences.SortOptions.ToList();
+        DefaultSortPicker.SelectedItem = AppPreferences.DefaultSort;
+        ConfirmDeleteSwitch.IsToggled = AppPreferences.ConfirmDelete;
+
         BuildAccentButtons();
 
         ProviderPicker.ItemsSource = ProviderNames;
@@ -39,14 +47,57 @@ public partial class SettingsPage : ContentPage
             return;
         }
 
-        Preferences.Default.Set("theme", theme);
-        Application.Current!.UserAppTheme = App.ThemeFromPreference(theme);
+        AppPreferences.SetTheme(theme);
         StatusLabel.Text = $"Theme mode set to {theme}.";
+    }
+
+    private void OnAmoledToggled(object sender, ToggledEventArgs e)
+    {
+        if (!_loaded)
+        {
+            return;
+        }
+
+        AppPreferences.SetAmoled(e.Value);
+        StatusLabel.Text = e.Value ? "AMOLED black is on." : "AMOLED black is off.";
+    }
+
+    private void OnDefaultViewChanged(object sender, EventArgs e)
+    {
+        if (!_loaded || DefaultViewPicker.SelectedItem is not string view)
+        {
+            return;
+        }
+
+        AppPreferences.SetDefaultView(view);
+        StatusLabel.Text = $"Library opens in {view.ToLowerInvariant()} view.";
+    }
+
+    private void OnDefaultSortChanged(object sender, EventArgs e)
+    {
+        if (!_loaded || DefaultSortPicker.SelectedItem is not string sort)
+        {
+            return;
+        }
+
+        AppPreferences.SetDefaultSort(sort);
+        StatusLabel.Text = $"Library sorts by {sort.ToLowerInvariant()} by default.";
+    }
+
+    private void OnConfirmDeleteToggled(object sender, ToggledEventArgs e)
+    {
+        if (!_loaded)
+        {
+            return;
+        }
+
+        AppPreferences.SetConfirmDelete(e.Value);
+        StatusLabel.Text = e.Value ? "You will be asked before deleting." : "Deletes happen without asking.";
     }
 
     private void BuildAccentButtons()
     {
-        var current = Preferences.Default.Get(App.AccentPreferenceKey, AccentChoice.Default.Key);
+        var current = AppPreferences.Accent;
         AccentRow.Children.Clear();
         foreach (var choice in AccentChoice.All)
         {
@@ -67,8 +118,7 @@ public partial class SettingsPage : ContentPage
 
     private void OnAccentClicked(AccentChoice choice)
     {
-        Preferences.Default.Set(App.AccentPreferenceKey, choice.Key);
-        App.ApplyAccent(choice.Key);
+        AppPreferences.SetAccent(choice.Key);
         BuildAccentButtons();
         StatusLabel.Text = $"Accent set to {choice.Name}.";
     }

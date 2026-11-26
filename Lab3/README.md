@@ -19,9 +19,20 @@ lives, and you can move it later from Settings → Library location. Moving copi
 your entries and covers into the new folder without overwriting anything; the
 old copy is kept.
 
-Settings also has theme mode (System, Light, Dark) and an accent color that
-recolors buttons and switches. The main screen switches between a list and a
-cover grid.
+The app has three bottom tabs, in the style of Aniyomi: **Library** (the list
+or cover grid), **Activity** (a feed of recent changes) and **Settings**.
+
+Settings covers:
+
+- **Appearance:** theme mode (System, Light, Dark), an AMOLED black option for
+  dark mode, and an accent color that recolors buttons and switches.
+- **Library:** the default view (list or grid), the default sort, and whether
+  deleting asks first.
+- **Cover search engine** and **Library location** (move the vault to app
+  storage, shared Documents or a custom folder; see below).
+
+Colors come from one palette (`Appearance.cs`), so light, dark and AMOLED
+themes all update without restarting the app.
 
 ```text
 /storage/emulated/0/Documents/TMPS-Watchlist/   shared, visible in Files
@@ -57,13 +68,15 @@ Lab3/
     Import/                AniList GraphQL + MAL XML + CSV adapters
   App/                     Lab3 MAUI Android client
                            package net.plesu.dinu.shameless.watchlist
-    MainPage               cards, stats, search, filters, undo/redo, export
+    MainPage               cards or cover grid, stats, search, filters, undo/redo, export
+    ActivityPage           activity feed tab
     EditPage               metadata, custom kind, category picker
     CoverPickerPage        provider search + local download
     ImportPage             source preview + import with progress
-    SettingsPage           theme + cover search engine
+    SettingsPage           appearance, library defaults, cover engine, location
     StorageSetupPage       first-run folder + permission choice
     StorageLocations       shared/app paths + permission flow
+    Appearance.cs          preferences and the light/dark/AMOLED palette
     Resources/AppIcon      adaptive app icon (SVG background + foreground)
     Resources/Images       logo.svg shown in the header
 ```

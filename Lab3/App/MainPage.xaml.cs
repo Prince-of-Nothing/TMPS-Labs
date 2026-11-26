@@ -12,12 +12,13 @@ public partial class MainPage : ContentPage
 {
     private readonly AppServices _services;
     private readonly StatisticsObserver _statistics;
-    private readonly ActivityLogObserver _activity = new();
     private readonly DelegateObserver _refreshObserver;
     private bool _liveStats;
     private bool _gridView;
     private readonly DataTemplate? _listTemplate;
     private readonly DataTemplate? _gridTemplate;
+    private string _appliedView = "";
+    private string _appliedSort = "";
 
     public MainPage(AppServices services)
     {
@@ -36,7 +37,6 @@ public partial class MainPage : ContentPage
         });
 
         _services.Events.Subscribe(_refreshObserver);
-        _services.Events.Subscribe(_activity);
         _services.Commands.HistoryChanged += (_, _) =>
             MainThread.BeginInvokeOnMainThread(UpdateHistory);
         _statistics.Updated += (_, _) =>
@@ -49,8 +49,10 @@ public partial class MainPage : ContentPage
 
         StatusFilter.ItemsSource = new List<string> { "All", "Planned", "Completed", "Consumed", "Rated" };
         StatusFilter.SelectedIndex = 0;
-        SortPicker.ItemsSource = new List<string> { "Title", "Rating", "Recently updated", "Kind" };
-        SortPicker.SelectedIndex = 0;
+        SortPicker.ItemsSource = AppPreferences.SortOptions.ToList();
+        ApplyDefaults();
+        AppPreferences.Changed += ApplyDefaults;
+        Unloaded += (_, _) => AppPreferences.Changed -= ApplyDefaults;
 
         SubtitleLabel.Text = $"Markdown vault · {_services.RootPath}";
         StatusLabel.Text = "Command + Observer + State + Strategy";
@@ -96,9 +98,31 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnLayoutClicked(object sender, EventArgs e)
+    private void OnLayoutClicked(object sender, EventArgs e) => ApplyLayout(!_gridView);
+
+    /// <summary>
+    /// Applies the default view and sort from Settings. Only changed defaults are
+    /// re-applied, so a temporary sort or layout choice survives unrelated changes
+    /// such as a theme switch.
+    /// </summary>
+    private void ApplyDefaults()
     {
-        _gridView = !_gridView;
+        if (AppPreferences.DefaultView != _appliedView)
+        {
+            _appliedView = AppPreferences.DefaultView;
+            ApplyLayout(_appliedView == AppPreferences.GridView);
+        }
+
+        if (AppPreferences.DefaultSort != _appliedSort)
+        {
+            _appliedSort = AppPreferences.DefaultSort;
+            SortPicker.SelectedItem = _appliedSort;
+        }
+    }
+
+    private void ApplyLayout(bool grid)
+    {
+        _gridView = grid;
         ItemsList.ItemsLayout = _gridView
             ? new GridItemsLayout(2, ItemsLayoutOrientation.Vertical)
             {
@@ -181,7 +205,7 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        var confirmed = await DisplayAlertAsync(
+        var confirmed = !AppPreferences.ConfirmDelete || await DisplayAlertAsync(
             "Delete entry",
             $"Delete “{item.Title}” and its local cover?",
             "Delete",
@@ -273,18 +297,6 @@ public partial class MainPage : ContentPage
             }
         });
         RefreshRows();
-    }
-
-    private async void OnSettingsClicked(object sender, EventArgs e) =>
-        await Navigation.PushAsync(new SettingsPage(_services));
-
-    private async void OnActivityClicked(object sender, EventArgs e)
-    {
-        var entries = _activity.Entries.TakeLast(12).ToArray();
-        await DisplayAlertAsync(
-            "Activity",
-            entries.Length == 0 ? "No activity yet." : string.Join("\n", entries),
-            "OK");
     }
 
     private void OnLiveStatsToggled(object sender, ToggledEventArgs e)

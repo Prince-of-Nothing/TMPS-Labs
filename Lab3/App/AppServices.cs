@@ -24,7 +24,8 @@ public sealed class AppServices
         ExportService exports,
         ImportService import,
         IReadOnlyList<IWatchlistImporter> importers,
-        HttpClient http)
+        HttpClient http,
+        ActivityLogObserver activity)
     {
         Repository = repository;
         Editor = editor;
@@ -37,6 +38,7 @@ public sealed class AppServices
         Import = import;
         Importers = importers;
         Http = http;
+        Activity = activity;
     }
 
     public WatchlistRepository Repository { get; }
@@ -49,6 +51,7 @@ public sealed class AppServices
     public ImportService Import { get; }
     public IReadOnlyList<IWatchlistImporter> Importers { get; }
     public HttpClient Http { get; }
+    public ActivityLogObserver Activity { get; }
     public string RootPath => Repository.RootPath;
 
     public static AppServices Create(string? rootPath = null)
@@ -66,6 +69,8 @@ public sealed class AppServices
         var store = new MarkdownWatchlistStoreFactory().Create(rootPath);
         var repository = new WatchlistRepository(store);
         var events = new WatchlistEvents();
+        var activity = new ActivityLogObserver();
+        events.Subscribe(activity);
         var editor = new WatchlistEditor(repository, events);
         var commands = new CommandInvoker();
 
@@ -98,7 +103,8 @@ public sealed class AppServices
             new ExportService(new CsvWatchlistExporter()),
             new ImportService(),
             importers,
-            http);
+            http,
+            activity);
     }
 
     public void SetCoverProvider(CoverProvider provider)
