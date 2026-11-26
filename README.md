@@ -30,10 +30,11 @@ AniList/MAL/CSV import and CSV/Markdown export).
 
 ## Releases
 
-Pushing a tag such as `labs-v1.0` runs
-[`.github/workflows/labs-release.yml`](.github/workflows/labs-release.yml):
-it runs the tests, builds and signs the Lab 2 and Lab 3 Android APKs, and
-attaches both plus the reports to a GitHub Release.
+Every push builds all labs with
+[`.github/workflows/build-all-labs.yml`](.github/workflows/build-all-labs.yml):
+Lab 0 console build, core tests, and the Lab 1, Lab 2 and Lab 3 Android APKs.
+Pushing a tag such as `labs-v1.0` (or `v*`) also publishes a GitHub Release with
+every APK attached.
 
 ```powershell
 git tag labs-v1.0

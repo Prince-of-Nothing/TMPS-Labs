@@ -747,7 +747,12 @@ fully compatible with Lab 2.
 to the category field. `CoverPickerPage` searches with thumbnails, provider
 label and local download. `ImportPage` chooses AniList, MAL XML or CSV,
 previews new/duplicate counts, then imports with a progress bar.
-`SettingsPage` (toolbar item) switches the theme between System/Light/Dark and
+The app has three bottom tabs in the Aniyomi style: **Library**, **Activity**
+(the full activity feed, newest first) and **Settings**. The theme has an AMOLED
+black option that applies only in dark mode; light, dark and AMOLED palettes
+are kept in `Appearance.cs`, and all pages read the same palette keys.
+
+`SettingsPage` (the Settings tab) switches the theme between System/Light/Dark and
 selects the cover search engine (Auto, Wikimedia, Open Library or TVmaze); both
 choices are stored in `Preferences` and applied without a restart. All pages
 use `AppThemeBinding` colours, so dark mode covers the whole app. Covers are
@@ -819,7 +824,7 @@ Build succeeded.
 APK:
 
 ```text
-Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk
+Lab3/App/bin/Debug/net10.0-android/net.plesu.dinu.shameless.watchlist-Signed.apk
 ```
 
 The debug APK used for the emulator run is built with
@@ -829,8 +834,8 @@ deployment step. A Release publish with the same command as CI (`-c Release`,
 binding warnings.
 
 The build requires JDK 21 specifically; JDK 25 is rejected by the Android SDK
-tooling (`XA0030`). The repository's `android-labs.yml` workflow installs the
-workload and JDK 21 and publishes both Android APKs. The `labs-release.yml`
+tooling (`XA0030`). The repository's `build-all-labs.yml` workflow installs the
+workload and JDK 21 and builds the Lab 1, Lab 2 and Lab 3 APKs on every push. The release job on `labs-v*` and `v*` tags
 workflow runs on `labs-v*` tags, runs the tests, publishes the signed Lab 2
 and Lab 3 APKs, and attaches both plus the reports to a GitHub Release.
 

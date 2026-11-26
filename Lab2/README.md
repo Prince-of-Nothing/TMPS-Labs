@@ -118,4 +118,4 @@ Full report: [`../Reports/Lab2.md`](../Reports/Lab2.md).
 
 A `labs-v*` tag publishes the signed Lab 2 APK, the signed Lab 3 APK and both
 reports to the GitHub Release. The branch CI workflow
-[`android-labs.yml`](../.github/workflows/android-labs.yml) builds both APKs.
+[`build-all-labs.yml`](../.github/workflows/build-all-labs.yml) builds the APK on every push.
