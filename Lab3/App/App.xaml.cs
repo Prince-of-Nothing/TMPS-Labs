@@ -4,17 +4,33 @@ namespace Lab3;
 
 public partial class App : Application
 {
+    public const string AccentPreferenceKey = "accent";
+
     private AppServices? _services;
 
     public App()
     {
         InitializeComponent();
-        UserAppTheme = Preferences.Default.Get("theme", "System") switch
+        UserAppTheme = ThemeFromPreference(Preferences.Default.Get("theme", "System"));
+        Resources["Plum"] = AccentChoice.Find(
+            Preferences.Default.Get(AccentPreferenceKey, AccentChoice.Default.Key)).Color;
+    }
+
+    public static AppTheme ThemeFromPreference(string theme) => theme switch
+    {
+        "Light" => AppTheme.Light,
+        "Dark" => AppTheme.Dark,
+        _ => AppTheme.Unspecified,
+    };
+
+    /// <summary>Replaces the Plum key that every accent-colored control reads.</summary>
+    public static void ApplyAccent(string key)
+    {
+        var choice = AccentChoice.Find(key);
+        if (Current is { } app)
         {
-            "Light" => AppTheme.Light,
-            "Dark" => AppTheme.Dark,
-            _ => AppTheme.Unspecified,
-        };
+            app.Resources["Plum"] = choice.Color;
+        }
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -38,28 +54,54 @@ public partial class App : Application
         return MainWindow(setup);
     }
 
-    private void OnStorageChosen(string root)
+    private void OnStorageChosen(string root) => SwitchLibrary(root, null);
+
+    /// <summary>Opens the library at <paramref name="root"/>, remembers it, and optionally shows a notice.</summary>
+    public void SwitchLibrary(string root, string? notice)
     {
         Preferences.Default.Set(StorageLocations.PreferenceKey, root);
         _services = AppServices.Create(root);
         var window = Windows.FirstOrDefault();
         if (window is not null)
         {
-            window.Page = new NavigationPage(new MainPage(_services))
+            var main = new MainPage(_services);
+            if (notice is not null)
             {
-                BarBackgroundColor = Color.FromArgb("#1A1525"),
-                BarTextColor = Colors.White,
-            };
+                main.ShowNotice(notice);
+            }
+
+            window.Page = NavigationRoot(main);
         }
     }
 
     private static Window MainWindow(Page page) =>
-        new(new NavigationPage(page)
-        {
-            BarBackgroundColor = Color.FromArgb("#1A1525"),
-            BarTextColor = Colors.White,
-        })
+        new(NavigationRoot(page))
         {
             Title = "Watchlist",
         };
+
+    private static NavigationPage NavigationRoot(Page page) =>
+        new(page)
+        {
+            BarBackgroundColor = Color.FromArgb("#1A1525"),
+            BarTextColor = Colors.White,
+        };
+}
+
+/// <summary>Accent colors offered in Settings, in the order they are shown.</summary>
+public sealed record AccentChoice(string Key, string Name, Color Color)
+{
+    public static readonly AccentChoice[] All =
+    [
+        new("plum", "Plum", Color.FromArgb("#6B5B7A")),
+        new("rose", "Rose", Color.FromArgb("#8C4A63")),
+        new("teal", "Teal", Color.FromArgb("#3E7C7A")),
+        new("forest", "Forest", Color.FromArgb("#3F6B46")),
+        new("amber", "Amber", Color.FromArgb("#9A6B2F")),
+    ];
+
+    public static AccentChoice Default => All[0];
+
+    public static AccentChoice Find(string key) =>
+        All.FirstOrDefault(choice => choice.Key == key) ?? Default;
 }

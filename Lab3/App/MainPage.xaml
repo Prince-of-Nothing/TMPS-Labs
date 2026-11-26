@@ -10,15 +10,45 @@
         <ToolbarItem Text="Settings" Clicked="OnSettingsClicked" />
     </ContentPage.ToolbarItems>
 
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <DataTemplate x:Key="GridCard" x:DataType="local:ItemRow">
+                <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+                        StrokeShape="RoundRectangle 14" Padding="0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnGridCardTapped" />
+                    </Border.GestureRecognizers>
+                    <VerticalStackLayout Spacing="0">
+                        <Border HeightRequest="172" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#F1EDE7, Dark=#2A2632}"
+                                StrokeShape="RoundRectangle 14,14,0,0">
+                            <Image Source="{Binding Cover}" Aspect="AspectFill" SemanticProperties.Description="Cover image" />
+                        </Border>
+                        <VerticalStackLayout Padding="10,8" Spacing="5">
+                            <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold" MaxLines="2" LineBreakMode="TailTruncation" />
+                            <Border BackgroundColor="{Binding StatusColor}" StrokeThickness="0" StrokeShape="RoundRectangle 6"
+                                    Padding="6,1" HorizontalOptions="Start">
+                                <Label Text="{Binding StatusText}" FontSize="10" FontAttributes="Bold" TextColor="#1A1525" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </DataTemplate>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <Grid Padding="16,12" RowSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-            <VerticalStackLayout Spacing="2">
-                <Label Text="Watchlist" FontSize="28" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
-                <Label x:Name="SubtitleLabel" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" LineBreakMode="TailTruncation" />
-            </VerticalStackLayout>
+            <HorizontalStackLayout Spacing="10">
+                <Image Source="logo.svg" HeightRequest="42" WidthRequest="42" VerticalOptions="Center"
+                       SemanticProperties.Description="Watchlist logo" />
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                    <Label Text="Watchlist" FontSize="28" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" />
+                    <Label x:Name="SubtitleLabel" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" LineBreakMode="TailTruncation" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
             <Button Grid.Column="1" Text="+ Add" Clicked="OnAddClicked"
-                    BackgroundColor="#6B5B7A" TextColor="White" FontAttributes="Bold"
+                    BackgroundColor="{DynamicResource Plum}" TextColor="White" FontAttributes="Bold"
                     CornerRadius="10" Padding="16,8" VerticalOptions="Center" />
         </Grid>
 
@@ -51,12 +81,13 @@
                 <Button Grid.Column="2" x:Name="UndoButton" Text="Undo" Clicked="OnUndoClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
                 <Button Grid.Column="3" x:Name="RedoButton" Text="Redo" Clicked="OnRedoClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
             </Grid>
-            <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="*,*,*,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="Reload" Clicked="OnReloadClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
-                <Button Grid.Column="1" Text="Activity" Clicked="OnActivityClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
-                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                <Button Grid.Column="1" x:Name="LayoutButton" Text="Grid view" Clicked="OnLayoutClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
+                <Button Grid.Column="2" Text="Activity" Clicked="OnActivityClicked" BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
+                <HorizontalStackLayout Grid.Column="3" Spacing="4" VerticalOptions="Center">
                     <Label Text="Live stats" FontSize="12" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
-                    <Switch x:Name="LiveStatsSwitch" Toggled="OnLiveStatsToggled" OnColor="#6B5B7A" />
+                    <Switch x:Name="LiveStatsSwitch" Toggled="OnLiveStatsToggled" OnColor="{DynamicResource Plum}" />
                 </HorizontalStackLayout>
             </Grid>
         </VerticalStackLayout>

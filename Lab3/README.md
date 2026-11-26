@@ -15,7 +15,13 @@ engine, and entries can use a custom kind and an existing category picked from
 a list.
 
 The vault is a folder of Markdown files. On first launch you choose where it
-lives:
+lives, and you can move it later from Settings → Library location. Moving copies
+your entries and covers into the new folder without overwriting anything; the
+old copy is kept.
+
+Settings also has theme mode (System, Light, Dark) and an accent color that
+recolors buttons and switches. The main screen switches between a list and a
+cover grid.
 
 ```text
 /storage/emulated/0/Documents/TMPS-Watchlist/   shared, visible in Files
@@ -50,6 +56,7 @@ Lab3/
     Export/                Strategy: CSV and Markdown
     Import/                AniList GraphQL + MAL XML + CSV adapters
   App/                     Lab3 MAUI Android client
+                           package net.plesu.dinu.shameless.watchlist
     MainPage               cards, stats, search, filters, undo/redo, export
     EditPage               metadata, custom kind, category picker
     CoverPickerPage        provider search + local download
@@ -57,6 +64,8 @@ Lab3/
     SettingsPage           theme + cover search engine
     StorageSetupPage       first-run folder + permission choice
     StorageLocations       shared/app paths + permission flow
+    Resources/AppIcon      adaptive app icon (SVG background + foreground)
+    Resources/Images       logo.svg shown in the header
 ```
 
 ## Behavioral patterns
@@ -109,7 +118,7 @@ $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
 dotnet build .\Lab3\App\Lab3.csproj -f net10.0-android
 ```
 
-APK output: `Lab3/App/bin/Debug/net10.0-android/com.tmps.lab3.watchlist-Signed.apk`.
+APK output: `Lab3/App/bin/Debug/net10.0-android/net.plesu.dinu.shameless.watchlist-Signed.apk`.
 
 Pushing a `labs-v*` tag builds the release APK in CI and attaches it to the
 GitHub Release (the workflow also publishes the Lab 2 APK and both

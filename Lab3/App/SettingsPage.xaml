@@ -12,9 +12,11 @@
             <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
                     StrokeShape="RoundRectangle 16" Padding="14">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Theme" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
-                    <Picker x:Name="ThemePicker" SelectedIndexChanged="OnThemeChanged" />
-                    <Label Text="Appearance follows the device unless you override it."
+                    <Label Text="Appearance" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Picker x:Name="ThemePicker" Title="Theme mode" SelectedIndexChanged="OnThemeChanged" />
+                    <Label Text="Accent color" FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                    <FlexLayout x:Name="AccentRow" Wrap="Wrap" JustifyContent="Start" AlignItems="Center" />
+                    <Label Text="Theme mode follows the device unless you override it. The accent colors buttons and switches."
                            FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
                 </VerticalStackLayout>
             </Border>
@@ -31,10 +33,17 @@
 
             <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
                     StrokeShape="RoundRectangle 16" Padding="14">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Library" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
-                    <Label x:Name="StorageLabel" FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" LineBreakMode="WordWrap" />
-                    <Label Text="Kinds and categories are edited from an entry. Type a custom kind in the kind field to create one."
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Library location" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Label x:Name="StorageLabel" FontSize="11" TextColor="{AppThemeBinding Light=#1A1525, Dark=#F4EEF7}" LineBreakMode="WordWrap" />
+
+                    <Button Text="Move to app storage (private)" Clicked="OnAppStorageClicked" />
+                    <Button x:Name="SharedButton" Text="Move to shared Documents" Clicked="OnSharedClicked" />
+
+                    <Entry x:Name="CustomPathEntry" Placeholder="Custom folder, e.g. /storage/emulated/0/Notes/Watchlist" />
+                    <Button Text="Move to custom folder" Clicked="OnCustomClicked" />
+
+                    <Label Text="Moving copies your entries and covers. Files that already exist in the new folder are kept, and the old copy stays where it is. A custom or shared folder needs “All files access”."
                            FontSize="11" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
                 </VerticalStackLayout>
             </Border>
