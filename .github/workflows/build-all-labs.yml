@@ -91,6 +91,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download all APKs
         uses: actions/download-artifact@v4
         with:
@@ -101,5 +103,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: apks/**/*.apk
+          files: |
+            apks/**/*-Signed.apk
+            Reports/Lab2.md
+            Reports/Lab3.md
           generate_release_notes: true

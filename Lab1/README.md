@@ -138,7 +138,7 @@ dotnet publish Lab1/Lab1.csproj -c Release -f net10.0-android -p:AndroidKeyStore
 
 ## Continuous integration
 
-The GitHub Actions workflow [`.github/workflows/lab1-android.yml`](../.github/workflows/lab1-android.yml) builds the Android APK on every `v*` tag (or manually via **workflow_dispatch**), uploads it as an artifact, and attaches it to a **GitHub Release** automatically.
+The GitHub Actions workflow [`.github/workflows/build-all-labs.yml`](../.github/workflows/build-all-labs.yml) builds the Android APK on every push, uploads it as an artifact, and also attaches it to a **GitHub Release** when a `v*` tag is pushed.
 
 ---
 
