@@ -102,7 +102,7 @@ Reused from Lab 2:
   `CoverServiceFactory`.
 
 `AppServices` gets its `CoverService` from the same `CoverServiceFactory.Create`
-call the Lab 2 console uses, so the cover picker in Lab 3 uses exactly the same
+call the Lab 2 app uses, so the cover picker in Lab 3 uses exactly the same
 Adapter + Decorator + Proxy path without repeating its wiring. Imported
 AniList/MAL covers can be displayed remotely or saved locally through the same
 proxy. The behavioral patterns sit on top of that path: choosing a cover is a
