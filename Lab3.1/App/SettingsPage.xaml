@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab3.SettingsPage"
+             Title="Settings"
+             BackgroundColor="{DynamicResource PageBg}">
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="Settings" FontSize="25" FontAttributes="Bold" />
+
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Appearance" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                    <Picker x:Name="ThemePicker" Title="Theme mode" SelectedIndexChanged="OnThemeChanged" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                            <Label Text="AMOLED black" FontSize="14" />
+                            <Label Text="Pure black backgrounds in dark mode. Saves battery on OLED screens."
+                                   FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1" x:Name="AmoledSwitch" Toggled="OnAmoledToggled" OnColor="{DynamicResource Plum}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Text="Accent color" FontSize="12" TextColor="{DynamicResource TextMuted}" />
+                    <FlexLayout x:Name="AccentRow" Wrap="Wrap" JustifyContent="Start" AlignItems="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Library" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                    <Picker x:Name="DefaultViewPicker" Title="Default view" SelectedIndexChanged="OnDefaultViewChanged" />
+                    <Picker x:Name="DefaultSortPicker" Title="Default sort" SelectedIndexChanged="OnDefaultSortChanged" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Confirm before deleting" FontSize="14" />
+                            <Label Text="Ask once before an entry and its cover are removed."
+                                   FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1" x:Name="ConfirmDeleteSwitch" Toggled="OnConfirmDeleteToggled" OnColor="{DynamicResource Plum}" VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Cover search engine" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                    <Picker x:Name="ProviderPicker" SelectedIndexChanged="OnProviderChanged" />
+                    <Label Text="Auto routes by kind: Open Library for books, TVmaze for shows, Wikimedia for films and games."
+                           FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Library location" FontSize="13" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                    <Label x:Name="StorageLabel" FontSize="11" LineBreakMode="WordWrap" />
+
+                    <Button Text="Move to app storage (private)" Clicked="OnAppStorageClicked" />
+                    <Button x:Name="SharedButton" Text="Move to shared Documents" Clicked="OnSharedClicked" />
+
+                    <Entry x:Name="CustomPathEntry" Placeholder="Custom folder, e.g. /storage/emulated/0/Notes/Watchlist" />
+                    <Button Text="Move to custom folder" Clicked="OnCustomClicked" />
+
+                    <Label Text="Moving copies your entries and covers. Files that already exist in the new folder are kept, and the old copy stays where it is. A custom or shared folder needs “All files access”."
+                           FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="{DynamicResource TextFaint}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

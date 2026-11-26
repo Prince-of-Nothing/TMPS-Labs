@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lab3.ImportPage"
+             Title="Import"
+             BackgroundColor="{DynamicResource PageBg}">
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="12">
+            <Label Text="Import a list" FontSize="24" FontAttributes="Bold" />
+            <Label Text="AniList reads a public username. MAL reads its exported XML. CSV works with any service that can export a title list."
+                   FontSize="12" TextColor="{DynamicResource TextMuted}" />
+
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Source" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                    <Picker x:Name="SourcePicker" SelectedIndexChanged="OnSourceChanged" />
+
+                    <VerticalStackLayout x:Name="AniListPanel" Spacing="6">
+                        <Label Text="AniList username" FontSize="12" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                        <Entry x:Name="UsernameEntry" Placeholder="e.g. your AniList username" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout x:Name="FilePanel" Spacing="6" IsVisible="False">
+                        <Label x:Name="FilePromptLabel" Text="MAL export file" FontSize="12"
+                               FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
+                        <Button x:Name="ChooseFileButton" Text="Choose XML file" Clicked="OnChooseFileClicked"
+                                BackgroundColor="#EAE6DF" TextColor="#4A2E3E" HorizontalOptions="Start" />
+                        <Label x:Name="FileLabel" Text="No file chosen." FontSize="11" TextColor="{DynamicResource TextMuted}" />
+                    </VerticalStackLayout>
+
+                    <Button x:Name="PreviewButton" Text="Preview" Clicked="OnPreviewClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="{DynamicResource TextFaint}" />
+            <Label x:Name="PreviewLabel" FontSize="12" TextColor="{DynamicResource LabelPlum}" />
+
+            <ProgressBar x:Name="ImportProgressBar" Progress="0" IsVisible="False" />
+            <Label x:Name="ProgressLabel" FontSize="11" TextColor="{DynamicResource TextMuted}" />
+            <Button x:Name="ImportButton" Text="Import" Clicked="OnImportClicked" IsEnabled="False" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
