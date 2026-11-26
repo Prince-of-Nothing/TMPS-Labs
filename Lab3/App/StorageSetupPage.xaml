@@ -3,41 +3,41 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Lab3.StorageSetupPage"
              Title="Library storage"
-             BackgroundColor="{AppThemeBinding Light=#F8F6F3, Dark=#121016}">
+             BackgroundColor="{DynamicResource PageBg}">
 
     <ScrollView Padding="16,12">
         <VerticalStackLayout Spacing="14">
             <Label Text="Where should the library live?" FontSize="25" FontAttributes="Bold" />
             <Label Text="The watchlist is a folder of Markdown files. Choose a location you can open later with a file manager or any text editor."
-                   FontSize="13" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
+                   FontSize="13" TextColor="{DynamicResource TextMuted}" />
 
-            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
                     StrokeShape="RoundRectangle 16" Padding="14">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="Shared Documents" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Label Text="Shared Documents" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
                     <Label Text="Visible in the Files app. Requires Android's “All files access” permission."
-                           FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
-                    <Label x:Name="SharedPathLabel" FontSize="11" TextColor="{AppThemeBinding Light=#A0899C, Dark=#C9BDCF}"
+                           FontSize="12" TextColor="{DynamicResource TextMuted}" />
+                    <Label x:Name="SharedPathLabel" FontSize="11" TextColor="{DynamicResource TextFaint}"
                            LineBreakMode="WordWrap" />
-                    <Label x:Name="PermissionLabel" FontSize="11" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#8C4A63, Dark=#E3A6C1}" />
+                    <Label x:Name="PermissionLabel" FontSize="11" FontAttributes="Bold" TextColor="{DynamicResource LabelRose}" />
                     <Button Text="Use shared Documents" Clicked="OnSharedClicked" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1B24}" Stroke="{AppThemeBinding Light=#EAE6DF, Dark=#393343}" StrokeThickness="1"
+            <Border BackgroundColor="{DynamicResource CardBg}" Stroke="{DynamicResource StrokeBg}" StrokeThickness="1"
                     StrokeShape="RoundRectangle 16" Padding="14">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="App storage" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#6B5B7A, Dark=#CDB9DB}" />
+                    <Label Text="App storage" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource LabelPlum}" />
                     <Label Text="Private to the app, no permission needed. Use Export or the shared folder if you want to open the files outside the app."
-                           FontSize="12" TextColor="{AppThemeBinding Light=#8A7F8C, Dark=#B9AFBF}" />
-                    <Label x:Name="AppPathLabel" FontSize="11" TextColor="{AppThemeBinding Light=#A0899C, Dark=#C9BDCF}"
+                           FontSize="12" TextColor="{DynamicResource TextMuted}" />
+                    <Label x:Name="AppPathLabel" FontSize="11" TextColor="{DynamicResource TextFaint}"
                            LineBreakMode="WordWrap" />
                     <Button Text="Use app storage" Clicked="OnAppClicked"
                             BackgroundColor="#EAE6DF" TextColor="#4A2E3E" />
                 </VerticalStackLayout>
             </Border>
 
-            <Label x:Name="StatusLabel" FontSize="12" TextColor="{AppThemeBinding Light=#A0899C, Dark=#C9BDCF}" />
+            <Label x:Name="StatusLabel" FontSize="12" TextColor="{DynamicResource TextFaint}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
